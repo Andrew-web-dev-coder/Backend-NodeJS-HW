@@ -1,0 +1,14 @@
+.container {
+  max-width:900px;
+  margin:0 auto;
+  padding:20px;
+}
+
+.main {
+  margin-top:20px;
+}
+
+.footer {
+  margin-top:40px;
+  opacity:0.5;
+}

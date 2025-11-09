@@ -1,74 +1,64 @@
-# Backend NodeJS HW — Work with Logs
+🚗 Auto Articles — Full-Stack Node.js + React App
+- Overview
 
-##  Project Description
-This project includes two Node.js applications that work together to generate and analyze log files.
+A simple full-stack application for managing car-related articles.
+Users can:
 
-### 1. Log Generator
-Generates random log entries based on time intervals:
-- Creates a **new folder every minute**.
-- Creates a **new log file every 10 seconds** inside the current folder.
-- Each log entry randomly represents either a `success` or an `error` event.
+View a list of existing articles
 
-### 2. Log Analyzer
-Analyzes the generated logs and calculates statistics:
-- Counts the number of `success` and `error` entries.
-- Supports a CLI parameter `--type` to filter logs by type (`success` or `error`).
-- Gracefully handles missing folders, malformed logs, or empty directories.
+Open and read a specific article
 
-Both applications share a custom `Logger` class implemented as a reusable module in the `shared/` directory.
+Create new articles using a WYSIWYG editor
 
----
+The frontend is built with React + Vite,
+and the backend uses Node.js + Express, storing data as JSON files.
 
-##  Installation and Setup
+* Tech Stack
 
-Clone the repository and install dependencies:
+Frontend: React, React Router, React Quill, Vite
+Backend: Node.js, Express, FS
+Other: concurrently (to run both servers together)
 
-```bash
-git clone https://github.com/Andrew-web-dev-coder/Backend-NodeJS-HW.git
-cd Backend-NodeJS-HW
-git checkout lab1-logs
+* Setup & Run Instructions
+
+Install dependencies
+
 npm install
 
-▶ How to Run:
-Run the Log Generator
-npm run gen
+
+Run only the backend
+
+npm run start:backend
 
 
-This will continuously generate random log entries every 10 seconds and create a new folder every minute.
+Backend server runs at http://localhost:4000
 
-Run the Log Analyzer
-npm run analyze
+Run only the frontend
 
-
-This command scans all log files inside the logs folder and prints statistics.
-
-Use CLI Filter
-npm run analyze -- --type error
-npm run analyze -- --type success
+npm run start:frontend
 
 
-The --type parameter filters logs by the specified type.
+App starts at http://localhost:5173
 
-Technologies Used:
+(Vite may choose another port if it’s already in use)
 
-Node.js
+Run both frontend and backend together
 
-fs-extra
+npm run start:all
 
-commander
 
-ES Modules (import/export)
+Both servers start concurrently using concurrently.
 
-Async/Await for file operations
+* Validation & Error Handling
 
-Features:
+Backend validates title and content (required and minimum length).
 
-Shared reusable logger module.
+Returns 400 Bad Request with a JSON error if validation fails.
 
-Automatic folder and file creation based on time.
+Frontend shows user-friendly messages for errors instead of plain alerts.
 
-Command-line filtering of logs.
-
-Error handling for missing or malformed log files.
-
-Clean, modular, and well-structured Node.js code.
+* API Endpoints
+Method	Route	Description
+GET	/articles	Get all saved articles
+GET	/articles/:id	Get a specific article by ID
+POST	/articles	Create a new article
