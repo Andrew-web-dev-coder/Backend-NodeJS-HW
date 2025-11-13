@@ -1,0 +1,13 @@
+{
+  "name": "article-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start:frontend": "cd ./article-app/frontend && npm run dev",
+    "start:backend": "cd ./article-app/backend && node server.js",
+    "start:all": "concurrently \"npm run start:backend\" \"npm run start:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

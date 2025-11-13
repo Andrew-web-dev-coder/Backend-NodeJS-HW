@@ -1,0 +1,14 @@
+.header {
+  display:flex;
+  justify-content:space-between;
+  padding:12px 0;
+}
+
+.brand {
+  font-size:22px;
+  font-weight:700;
+}
+
+.nav a {
+  margin-left:16px;
+}
