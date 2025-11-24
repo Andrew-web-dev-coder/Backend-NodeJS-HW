@@ -2,5 +2,14 @@
   "id": 3,
   "title": "Toyota Supra A80",
   "content": "The Toyota Supra A80 is an iconic Japanese sports car from the 1990s, famous for its 2JZ-GTE turbocharged engine and incredible tuning potential. It became a global legend after appearing in the Fast & Furious movies.",
-  "createdAt": "2025-11-09T02:24:29.096Z"
+  "createdAt": "2025-11-09T02:24:29.096Z",
+  "attachments": [
+    {
+      "filename": "1763844866069-Toyota Supra A80.jpg",
+      "originalName": "Toyota Supra A80.jpg",
+      "size": 179080,
+      "url": "/uploads/1763844866069-Toyota Supra A80.jpg"
+    }
+  ],
+  "updatedAt": "2025-11-22T20:54:26.079Z"
 }

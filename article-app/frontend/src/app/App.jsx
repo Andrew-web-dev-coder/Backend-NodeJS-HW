@@ -7,9 +7,12 @@ import ArticleView from "../../pages/ArticleView/ArticleView.jsx";
 import CreateArticle from "../../pages/CreateArticle/CreateArticle.jsx";
 import Editor from "../../pages/Editor/Editor.jsx";
 
+import { ToastProvider } from "../../src/toast.jsx";
+import "../../src/ws.js"; 
+
 export default function App() {
   return (
-    <>
+    <ToastProvider>
       <Header />
       <Routes>
         <Route path="/" element={<ArticlesList />} />
@@ -17,6 +20,6 @@ export default function App() {
         <Route path="/create" element={<CreateArticle />} />
         <Route path="/edit/:id" element={<Editor />} />
       </Routes>
-    </>
+    </ToastProvider>
   );
 }
