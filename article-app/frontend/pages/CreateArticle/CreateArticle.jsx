@@ -1,21 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Editor from "../Editor/Editor";
 import Button from "../../shared/ui/button/Button";
-import { api } from "../../src/api/index.js";
+import * as api from "/src/api/index.js"; 
 
 export default function CreateArticle() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [files, setFiles] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  const fileInputRef = useRef(null);
+  const navigate = useNavigate();
+
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "application/pdf",
+  ];
+
+  const handleFileChange = (e) => {
+    const selected = Array.from(e.target.files);
+
+    for (const file of selected) {
+      if (!allowedTypes.includes(file.type)) {
+        setErrorMessage(`❌ Unsupported file: ${file.name}`);
+        return;
+      }
+    }
+
+    setFiles(selected);
+    setErrorMessage("");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
 
-    
     if (title.trim().length < 3) {
       setErrorMessage("Title must be at least 3 characters.");
       return;
@@ -29,15 +54,21 @@ export default function CreateArticle() {
     setIsSaving(true);
 
     try {
-      
-      await api.post({ title, content });
+     
+      const created = await api.createWithFiles({
+        title,
+        content,
+        files,
+      });
 
       setSuccessMessage("✅ Article created successfully!");
       setTitle("");
       setContent("");
+      setFiles([]);
 
+      
       setTimeout(() => {
-        window.location.href = "/";
+        navigate(`/article/${created.id}`); 
       }, 800);
     } catch (error) {
       console.error(error);
@@ -66,6 +97,36 @@ export default function CreateArticle() {
         />
 
         <Editor value={content} onChange={setContent} />
+
+       
+        <div style={{ marginTop: "25px" }}>
+          <label style={{ fontWeight: 500 }}>Attach files:</label>
+
+          <div style={{ marginTop: "10px" }}>
+            <input
+              type="file"
+              multiple
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+            />
+
+            <Button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Upload files
+            </Button>
+          </div>
+
+          {files.length > 0 && (
+            <ul style={{ marginTop: "10px", fontSize: "14px" }}>
+              {Array.from(files).map((f) => (
+                <li key={f.name}>{f.name}</li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         {errorMessage && (
           <p
@@ -97,7 +158,7 @@ export default function CreateArticle() {
           </p>
         )}
 
-        <div style={{ textAlign: "left", marginTop: "43px" }}>
+        <div style={{ textAlign: "left", marginTop: "40px" }}>
           <Button type="submit" disabled={isSaving}>
             {isSaving ? "Saving..." : "Save"}
           </Button>

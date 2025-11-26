@@ -1,6 +1,15 @@
 {
-  "id": 3,
-  "title": "Toyota Supra A80",
-  "content": "The Toyota Supra A80 is an iconic Japanese sports car from the 1990s, famous for its 2JZ-GTE turbocharged engine and incredible tuning potential. It became a global legend after appearing in the Fast & Furious movies.",
-  "createdAt": "2025-11-09T02:24:29.096Z"
+  "id": "3",
+  "title": "Audi RS6 Avant",
+  "content": "The Audi RS6 Avant is a high-performance station wagon combining luxury and practicality with a powerful twin-turbo V8 engine and quattro all-wheel drive.",
+  "createdAt": "2025-11-26T22:27:49.083Z",
+  "attachments": [
+    {
+      "filename": "1764196106571-Audi RS6 Avant.jpg",
+      "originalname": "Audi RS6 Avant.jpg",
+      "size": 42256,
+      "url": "/uploads/1764196106571-Audi RS6 Avant.jpg"
+    }
+  ],
+  "updatedAt": "2025-11-26T22:28:26.580Z"
 }

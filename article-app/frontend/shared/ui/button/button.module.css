@@ -10,3 +10,9 @@
   opacity:0.6;
   cursor:not-allowed;
 }
+
+.btn:hover {
+  background-color: #be8afefe;
+  color: #fff;   
+  border: 1px solid #be8afefe;     
+}
