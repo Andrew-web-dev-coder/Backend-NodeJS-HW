@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { api } from "../../src/api/index.js";
+import * as api from "../../src/api/index.js";
+
 import ArticleCard from "../../shared/ui/articleCard/ArticleCard.jsx";
 
 

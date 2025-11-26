@@ -7,7 +7,7 @@ import ArticleView from "../../pages/ArticleView/ArticleView.jsx";
 import CreateArticle from "../../pages/CreateArticle/CreateArticle.jsx";
 import Editor from "../../pages/Editor/Editor.jsx";
 
-import { ToastProvider } from "../../src/toast.jsx";
+import { ToastProvider } from "../ToastProvider.jsx";
 import "../../src/ws.js"; 
 
 export default function App() {

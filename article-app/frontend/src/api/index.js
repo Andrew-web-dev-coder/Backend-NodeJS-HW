@@ -1,103 +1,70 @@
 const API_URL = "http://localhost:4000/articles";
 
-export const api = {
 
-  async list() {
-    const res = await fetch(API_URL);
-    return res.json();
-  },
+export async function get(id) {
+  const res = await fetch(`${API_URL}/${id}`);
+  if (!res.ok) throw new Error("Failed to fetch article");
+  return await res.json();
+}
 
- 
-  async get(id) {
-    const res = await fetch(`${API_URL}/${id}`);
-    if (!res.ok) throw new Error("Error fetching article");
-    return res.json();
-  },
+export async function list() {
+  const res = await fetch(API_URL);
+  if (!res.ok) throw new Error("Failed to fetch list");
+  return await res.json();
+}
+
+export async function createWithFiles(data) {
+  const form = new FormData();
+  form.append("title", data.title);
+  form.append("content", data.content);
+
+  (data.files || []).forEach((f) => form.append("files", f));
+
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: form,
+  });
+
+  if (!res.ok) throw new Error("Create failed");
+  return await res.json();
+}
 
 
-  async post(data) {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+export async function updateWithFiles(id, data) {
+  const form = new FormData();
+  form.append("title", data.title);
+  form.append("content", data.content);
 
-    if (!res.ok) throw new Error("Error creating article");
-    return res.json();
-  },
+  (data.files || []).forEach((f) => form.append("files", f));
 
- 
-  async update(id, data) {
-    const res = await fetch(`${API_URL}/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+  const res = await fetch(`${API_URL}/${id}`, {
+    method: "PUT",
+    body: form,
+  });
 
-    if (!res.ok) throw new Error("Error updating article");
-    return res.json();
-  },
-
-  
-  async postForm(formData) {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!res.ok) throw new Error("Error creating article (file upload)");
-    return res.json();
-  },
-
-  
-  async updateForm(id, formData) {
-    const res = await fetch(`${API_URL}/${id}`, {
-      method: "PUT",
-      body: formData,
-    });
-
-    if (!res.ok) throw new Error("Error updating article (file upload)");
-    return res.json();
-  },
+  if (!res.ok) throw new Error("Update failed");
 
  
-  async updateWithFiles(id, { title, content, files }) {
-    const form = new FormData();
-    form.append("title", title);
-    form.append("content", content);
-
-    if (files) {
-      for (const f of files) form.append("files", f);
-    }
-
-    const res = await fetch(`${API_URL}/${id}`, {
-      method: "PUT",
-      body: form,
-    });
-
-    if (!res.ok) throw new Error("Error updating article (file-mode)");
-    return res.json();
-  },
+  return await res.json();
+}
 
 
-  async removeAttachment(id, filename) {
-    const safeName = encodeURIComponent(filename); 
+export async function remove(id) {
+  const res = await fetch(`${API_URL}/${id}`, {
+    method: "DELETE",
+  });
 
-    const res = await fetch(`${API_URL}/${id}/attachments/${safeName}`, {
-      method: "DELETE",
-    });
-
-    if (!res.ok) throw new Error("Error deleting attachment");
-    return res.json();
-  },
+  if (!res.ok) throw new Error("Delete failed");
+  return await res.json();
+}
 
 
-  async remove(id) {
-    const res = await fetch(`${API_URL}/${id}`, {
-      method: "DELETE",
-    });
+export async function removeAttachment(id, filename) {
+  const res = await fetch(`${API_URL}/${id}/attachments/${encodeURIComponent(filename)}`, {
+    method: "DELETE",
+  });
 
-    if (!res.ok) throw new Error("Error deleting article");
-    return res.json();
-  },
-};
+  if (!res.ok) throw new Error("Attachment delete failed");
+  return await res.json();
+}
+

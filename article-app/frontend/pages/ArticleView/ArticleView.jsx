@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { api } from "../../src/api/index.js";
+import * as api from "../../src/api/index.js";
 import Button from "../../shared/ui/button/Button";
-
 
 import "../../src/ws.js";
 
@@ -22,23 +21,33 @@ export default function ArticleView() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
- 
   useEffect(() => {
     api
       .get(id)
-      .then(setArticle)
-      .catch(() => setError("Failed to load article"))
-      .finally(() => setLoading(false));
+      .then((data) => {
+        setArticle(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Failed to load article");
+        setLoading(false);
+      });
   }, [id]);
 
+
   const startEdit = () => {
+    if (!article) return;
+
     setEditing(true);
     setNewTitle(article.title);
     setNewContent(article.content);
     setNewFiles([]);
   };
 
+  
   const handleSave = async () => {
+    if (!article) return;
+
     setSaving(true);
 
     try {
@@ -48,12 +57,17 @@ export default function ArticleView() {
         files: newFiles,
       });
 
+      
+      if (!updated || !updated.id) {
+        throw new Error("Bad response from server");
+      }
+
       setArticle(updated);
       setEditing(false);
+      setSaving(false);
     } catch (e) {
       console.error(e);
       setError("Failed to save article");
-    } finally {
       setSaving(false);
     }
   };
@@ -77,15 +91,15 @@ export default function ArticleView() {
     if (!window.confirm("Delete this file?")) return;
 
     try {
-      
       const updated = await api.removeAttachment(article.id, filename);
-      setArticle(updated);
+      if (updated) setArticle(updated);
     } catch (e) {
       console.error(e);
       setError("Error deleting attachment");
     }
   };
 
+  
   if (loading) return <p style={{ padding: 24 }}>Loading...</p>;
   if (!article) return <p style={{ padding: 24 }}>Not found</p>;
 
@@ -96,53 +110,72 @@ export default function ArticleView() {
       <h1>{article.title}</h1>
 
    
-      {article.attachments?.length > 0 && (
-        <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
-          {article.attachments.map((file) => {
-            const url = `http://localhost:4000${file.url}`;
+      {Array.isArray(article.attachments) && article.attachments.length > 0 && (
+      <div style={{ marginBottom: 32 }}>
+        {article.attachments.map((file) => {
+          const url = `http://localhost:4000${file.url}`;
+          const isImg = isImage(file);
 
-            return (
-              <div
-                key={file.filename}
-                style={{
-                  background: "white",
-                  padding: 10,
-                  borderRadius: 6,
-                  minWidth: 200,
-                  boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-                  textAlign: "center",
-                }}
-              >
-                {isImage(file) ? (
-                  <img
-                    src={url}
-                    style={{ width: "100%", borderRadius: 6 }}
-                    alt=""
-                  />
-                ) : (
-                  <div style={{ padding: 20, background: "#eee" }}>FILE</div>
-                )}
+          return (
+            <div key={file.filename} style={{ marginBottom: 24 }}>
+              
+              
+              {isImg ? (
+                <img
+                  src={url}
+                  alt=""
+                  style={{
+                    width: "100%",
+                    maxHeight: "70vh",
+                    objectFit: "cover",
+                    borderRadius: 10,
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    padding: 20,
+                    background: "#eee",
+                    borderRadius: 10,
+                    textAlign: "center",
+                  }}
+                >
+                  FILE
+                </div>
+              )}
 
-                <a href={url} target="_blank" rel="noreferrer">
-                  {file.originalName}
+              
+              {editing && (
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: "inline-block",
+                    marginTop: 8,
+                    fontSize: 16,
+                  }}
+                >
+                  {file.originalName || file.originalname}
                 </a>
+              )}
 
-                
-                {editing && (
-                  <Button
-                    style={{ marginTop: 10 }}
-                    onClick={() => handleRemoveAttachment(file.filename)}
-                  >
-                    Delete file
-                  </Button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+              
+              {editing && (
+                <Button
+                  style={{ marginLeft: 12 }}
+                  onClick={() => handleRemoveAttachment(file.filename)}
+                >
+                  Delete file
+                </Button>
+              )}
 
-      
+            </div>
+          );
+        })}
+      </div>
+    )}
+
       {editing ? (
         <div>
           <input
@@ -157,15 +190,12 @@ export default function ArticleView() {
             style={{ width: "100%", minHeight: 150 }}
           />
 
-          
           <div style={{ marginTop: 12 }}>
             <label>Attach new files:</label>
 
             <Button
               type="button"
-              onClick={() =>
-                document.getElementById("editFileInput").click()
-              }
+              onClick={() => document.getElementById("editFileInput").click()}
               style={{ marginLeft: 10 }}
             >
               Upload files
@@ -197,6 +227,7 @@ export default function ArticleView() {
         </div>
       ) : (
         <>
+          
           <div
             dangerouslySetInnerHTML={{ __html: article.content }}
             style={{ margin: "20px 0", lineHeight: 1.6 }}
@@ -211,6 +242,7 @@ export default function ArticleView() {
         </>
       )}
 
+     
       {error && (
         <p style={{ marginTop: 16, color: "red" }}>
           {error}

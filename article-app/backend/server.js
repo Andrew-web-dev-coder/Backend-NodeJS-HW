@@ -10,9 +10,7 @@ const app = express();
 const PORT = 4000;
 const WSPORT = 4001;
 
-// -----------------------------
-// WebSocket
-// -----------------------------
+
 const wss = new WebSocketServer({ port: WSPORT });
 console.log(`🔌 WebSocket server running on ws://localhost:${WSPORT}`);
 
@@ -23,16 +21,18 @@ function broadcast(data) {
   });
 }
 
-// -----------------------------
-// Multer
-// -----------------------------
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+  filename: (req, file, cb) =>
+    cb(null, Date.now() + "-" + file.originalname),
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/") || file.mimetype === "application/pdf") {
+  if (
+    file.mimetype.startsWith("image/") ||
+    file.mimetype === "application/pdf"
+  ) {
     cb(null, true);
   } else {
     cb(new Error("Invalid file type"), false);
@@ -41,17 +41,15 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter });
 
-// -----------------------------
+
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
-// -----------------------------
+
 initializeArticles();
 
-// -----------------------------
-// CREATE ARTICLE
-// -----------------------------
+
 app.post("/articles", upload.array("files"), (req, res) => {
   try {
     const article = ArticleService.create({
@@ -74,24 +72,19 @@ app.post("/articles", upload.array("files"), (req, res) => {
   }
 });
 
-// -----------------------------
-// UPDATE ARTICLE (fixed)
-// -----------------------------
+
 app.put("/articles/:id", upload.array("files"), (req, res) => {
   try {
-    const result = ArticleService.update(req.params.id, {
+    const updated = ArticleService.update(req.params.id, {
       title: req.body.title,
       content: req.body.content,
       files: req.files || [],
     });
 
-    if (!result) return res.status(404).json({ error: "Not found" });
+    if (!updated) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
-    // <--- ПРАВИЛЬНО: достаём updated article
-    const updated = result.article;
-    const newFiles = result.newFiles;
-
-    // WebSocket: обновление статьи
     broadcast({
       type: "article_updated",
       id: updated.id,
@@ -99,13 +92,14 @@ app.put("/articles/:id", upload.array("files"), (req, res) => {
       message: `✏ Article updated: "${updated.title}"`,
     });
 
-    // WebSocket: добавлены новые файлы
+    
+    const newFiles = req.files?.map((f) => f.originalname) || [];
     if (newFiles.length > 0) {
       broadcast({
         type: "file_added",
         id: updated.id,
         title: updated.title,
-        files: newFiles.map((f) => f.originalName),
+        files: newFiles,
         message: `📎 New file(s) added to "${updated.title}"`,
       });
     }
@@ -117,9 +111,7 @@ app.put("/articles/:id", upload.array("files"), (req, res) => {
   }
 });
 
-// -----------------------------
-// DELETE ATTACHMENT
-// -----------------------------
+
 app.delete("/articles/:id/attachments/:filename", (req, res) => {
   try {
     const decoded = decodeURIComponent(req.params.filename);
@@ -141,19 +133,19 @@ app.delete("/articles/:id/attachments/:filename", (req, res) => {
   }
 });
 
-// -----------------------------
+
 app.get("/articles", (req, res) => {
   res.json(ArticleService.getAll());
 });
 
-// -----------------------------
+
 app.get("/articles/:id", (req, res) => {
   const item = ArticleService.getById(req.params.id);
   if (!item) return res.status(404).json({ error: "Not found" });
   res.json(item);
 });
 
-// -----------------------------
+
 app.delete("/articles/:id", (req, res) => {
   const result = ArticleService.remove(req.params.id);
   if (!result) return res.status(404).json({ error: "Not found" });
@@ -167,7 +159,6 @@ app.delete("/articles/:id", (req, res) => {
   res.json({ message: "Deleted" });
 });
 
-// -----------------------------
 app.listen(PORT, () =>
   console.log(`🚀 REST API running at http://localhost:${PORT}`)
 );

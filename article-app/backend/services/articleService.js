@@ -8,17 +8,12 @@ const __dirname = path.dirname(__filename);
 const dataDir = path.join(__dirname, "../data");
 const uploadsDir = path.join(__dirname, "../uploads");
 
-// ------------------------------------------------------------
-// ENSURE DIRECTORIES
-// ------------------------------------------------------------
 function ensureDirectories() {
   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
   if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 }
 
-// ------------------------------------------------------------
-// INITIALIZE DEFAULT ARTICLE (ONLY IF EMPTY)
-// ------------------------------------------------------------
+
 export function initializeArticles() {
   ensureDirectories();
 
@@ -27,13 +22,31 @@ export function initializeArticles() {
 
   const defaultArticles = [
     {
-      id: 1,
+      id: "1",
       title: "BMW M3 E46",
       content:
         "The BMW M3 E46 is a legendary sports car from the early 2000s, powered by the naturally aspirated S54 engine paired with a manual gearbox.",
       createdAt: new Date().toISOString(),
-      attachments: []
-    }
+      attachments: [],
+    },
+
+    {
+      id: "2",
+      title: "Toyota Supra A80",
+      content:
+        "The Toyota Supra A80 is an iconic Japanese sports car from the 1990s, famous for its 2JZ-GTE turbocharged engine and incredible tuning potential. It became a global legend after appearing in the Fast & Furious movies.",
+      createdAt: new Date().toISOString(),
+      attachments: [],
+    },
+
+    {
+      id: "3",
+      title: "Audi RS6 Avant",
+      content:
+        "The Audi RS6 Avant is a high-performance station wagon combining luxury and practicality with a powerful twin-turbo V8 engine and quattro all-wheel drive.",
+      createdAt: new Date().toISOString(),
+      attachments: [],
+    },
   ];
 
   for (const article of defaultArticles) {
@@ -43,12 +56,11 @@ export function initializeArticles() {
     );
   }
 
-  console.log("✅ Default articles initialized");
+  console.log("✅ Default articles initialized (BMW, Supra, Audi)");
 }
 
-// ------------------------------------------------------------
-// GET ALL
-// ------------------------------------------------------------
+
+
 export function getAll() {
   ensureDirectories();
   const files = fs.readdirSync(dataDir);
@@ -60,14 +72,11 @@ export function getAll() {
     return {
       id: content.id,
       title: content.title,
-      createdAt: content.createdAt
+      createdAt: content.createdAt,
     };
   });
 }
 
-// ------------------------------------------------------------
-// GET BY ID
-// ------------------------------------------------------------
 export function getById(id) {
   const filePath = path.join(dataDir, `${id}.json`);
   if (!fs.existsSync(filePath)) return null;
@@ -75,9 +84,7 @@ export function getById(id) {
   return JSON.parse(fs.readFileSync(filePath, "utf-8"));
 }
 
-// ------------------------------------------------------------
-// CREATE
-// ------------------------------------------------------------
+
 export function create({ title, content, files }) {
   ensureDirectories();
 
@@ -85,9 +92,10 @@ export function create({ title, content, files }) {
 
   const attachments = (files || []).map((f) => ({
     filename: f.filename,
-    originalName: f.originalname,
+    
+    originalname: f.originalname,
     size: f.size,
-    url: `/uploads/${f.filename}`
+    url: `/uploads/${f.filename}`,
   }));
 
   const article = {
@@ -95,7 +103,7 @@ export function create({ title, content, files }) {
     title,
     content,
     createdAt: new Date().toISOString(),
-    attachments
+    attachments,
   };
 
   fs.writeFileSync(
@@ -106,9 +114,6 @@ export function create({ title, content, files }) {
   return article;
 }
 
-// ------------------------------------------------------------
-// UPDATE (FIXED VERSION)
-// ------------------------------------------------------------
 export function update(id, { title, content, files }) {
   const filePath = path.join(dataDir, `${id}.json`);
   if (!fs.existsSync(filePath)) return null;
@@ -116,15 +121,14 @@ export function update(id, { title, content, files }) {
   const existing = JSON.parse(fs.readFileSync(filePath, "utf-8"));
 
   let attachments = existing.attachments || [];
-  let newFiles = [];
 
-  // New uploaded files — append, not replace
+
   if (files && files.length > 0) {
-    newFiles = files.map((f) => ({
+    const newFiles = files.map((f) => ({
       filename: f.filename,
-      originalName: f.originalname,
+      originalname: f.originalname,
       size: f.size,
-      url: `/uploads/${f.filename}`
+      url: `/uploads/${f.filename}`,
     }));
 
     attachments = [...attachments, ...newFiles];
@@ -132,24 +136,20 @@ export function update(id, { title, content, files }) {
 
   const updated = {
     ...existing,
-    title: title !== undefined ? title : existing.title,
-    content: content !== undefined ? content : existing.content,
+  
+    title: title ?? existing.title,
+    content: content ?? existing.content,
     attachments,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   };
 
   fs.writeFileSync(filePath, JSON.stringify(updated, null, 2));
 
-  // *** важная правка ***
-  return {
-    article: updated,
-    newFiles
-  };
+  
+  return updated;
 }
 
-// ------------------------------------------------------------
-// REMOVE ARTICLE
-// ------------------------------------------------------------
+
 export function remove(id) {
   const filePath = path.join(dataDir, `${id}.json`);
   if (!fs.existsSync(filePath)) return false;
@@ -167,9 +167,7 @@ export function remove(id) {
   return true;
 }
 
-// ------------------------------------------------------------
-// REMOVE ONE ATTACHMENT
-// ------------------------------------------------------------
+
 export function removeAttachment(id, filename) {
   const filePath = path.join(dataDir, `${id}.json`);
   if (!fs.existsSync(filePath)) return null;

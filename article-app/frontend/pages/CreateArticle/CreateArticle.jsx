@@ -1,7 +1,8 @@
 import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Editor from "../Editor/Editor";
 import Button from "../../shared/ui/button/Button";
-import { api } from "../../src/api/index.js";
+import * as api from "/src/api/index.js"; 
 
 export default function CreateArticle() {
   const [title, setTitle] = useState("");
@@ -12,8 +13,14 @@ export default function CreateArticle() {
   const [successMessage, setSuccessMessage] = useState("");
 
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "application/pdf",
+  ];
 
   const handleFileChange = (e) => {
     const selected = Array.from(e.target.files);
@@ -44,24 +51,24 @@ export default function CreateArticle() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("content", content);
-
-    files.forEach((f) => formData.append("files", f));
-
     setIsSaving(true);
 
     try {
-      await api.postForm(formData);
+     
+      const created = await api.createWithFiles({
+        title,
+        content,
+        files,
+      });
 
       setSuccessMessage("✅ Article created successfully!");
       setTitle("");
       setContent("");
       setFiles([]);
 
+      
       setTimeout(() => {
-        window.location.href = "/";
+        navigate(`/article/${created.id}`); 
       }, 800);
     } catch (error) {
       console.error(error);
@@ -91,12 +98,11 @@ export default function CreateArticle() {
 
         <Editor value={content} onChange={setContent} />
 
-     
+       
         <div style={{ marginTop: "25px" }}>
           <label style={{ fontWeight: 500 }}>Attach files:</label>
 
           <div style={{ marginTop: "10px" }}>
-         
             <input
               type="file"
               multiple
@@ -105,19 +111,17 @@ export default function CreateArticle() {
               style={{ display: "none" }}
             />
 
-          
             <Button
               type="button"
-              onClick={() => fileInputRef.current.click()}
+              onClick={() => fileInputRef.current?.click()}
             >
               Upload files
             </Button>
           </div>
 
-       
           {files.length > 0 && (
             <ul style={{ marginTop: "10px", fontSize: "14px" }}>
-              {files.map((f) => (
+              {Array.from(files).map((f) => (
                 <li key={f.name}>{f.name}</li>
               ))}
             </ul>

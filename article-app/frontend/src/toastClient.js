@@ -5,5 +5,5 @@ export function registerToast(fn) {
 }
 
 export function toast(message) {
-  showToast(message);
+  if (showToast) showToast(message);
 }
