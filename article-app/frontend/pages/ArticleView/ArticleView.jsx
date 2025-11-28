@@ -34,7 +34,6 @@ export default function ArticleView() {
       });
   }, [id]);
 
-
   const startEdit = () => {
     if (!article) return;
 
@@ -44,7 +43,6 @@ export default function ArticleView() {
     setNewFiles([]);
   };
 
-  
   const handleSave = async () => {
     if (!article) return;
 
@@ -57,7 +55,6 @@ export default function ArticleView() {
         files: newFiles,
       });
 
-      
       if (!updated || !updated.id) {
         throw new Error("Bad response from server");
       }
@@ -86,7 +83,6 @@ export default function ArticleView() {
     }
   };
 
-  
   const handleRemoveAttachment = async (filename) => {
     if (!window.confirm("Delete this file?")) return;
 
@@ -99,83 +95,116 @@ export default function ArticleView() {
     }
   };
 
-  
   if (loading) return <p style={{ padding: 24 }}>Loading...</p>;
   if (!article) return <p style={{ padding: 24 }}>Not found</p>;
 
   const isImage = (f) => /\.(jpg|jpeg|png|gif|webp)$/i.test(f.filename);
+  const isPdf = (f) => /\.pdf$/i.test(f.filename);
 
   return (
     <div style={{ padding: "24px" }}>
       <h1>{article.title}</h1>
 
-   
+      
       {Array.isArray(article.attachments) && article.attachments.length > 0 && (
-      <div style={{ marginBottom: 32 }}>
-        {article.attachments.map((file) => {
-          const url = `http://localhost:4000${file.url}`;
-          const isImg = isImage(file);
+        <div style={{ marginBottom: 32 }}>
+          {article.attachments.map((file) => {
+            const url = `http://localhost:4000${file.url}`;
+            const img = isImage(file);
+            const pdf = isPdf(file);
 
-          return (
-            <div key={file.filename} style={{ marginBottom: 24 }}>
-              
-              
-              {isImg ? (
-                <img
-                  src={url}
-                  alt=""
-                  style={{
-                    width: "100%",
-                    maxHeight: "70vh",
-                    objectFit: "cover",
-                    borderRadius: 10,
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    padding: 20,
-                    background: "#eee",
-                    borderRadius: 10,
-                    textAlign: "center",
-                  }}
-                >
-                  FILE
-                </div>
-              )}
+            return (
+              <div key={file.filename} style={{ marginBottom: 24 }}>
+                
+                {img && (
+                  <img
+                    src={url}
+                    alt=""
+                    style={{
+                      width: "100%",
+                      maxHeight: "70vh",
+                      objectFit: "cover",
+                      borderRadius: 10,
+                    }}
+                  />
+                )}
 
-              
-              {editing && (
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: "inline-block",
-                    marginTop: 8,
-                    fontSize: 16,
-                  }}
-                >
-                  {file.originalName || file.originalname}
-                </a>
-              )}
+                
+                {pdf && (
+                  <div
+                    style={{
+                      padding: 20,
+                      background: "#f5f5f5",
+                      borderRadius: 10,
+                      textAlign: "center",
+                    }}
+                  >
+                    <p style={{ marginBottom: 10 }}>PDF Document</p>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        padding: "10px 22px",
+                        background: "#6d28d9",
+                        color: "white",
+                        borderRadius: 8,
+                        textDecoration: "none",
+                        display: "inline-block",
+                      }}
+                    >
+                      Open PDF
+                    </a>
+                  </div>
+                )}
 
-              
-              {editing && (
-                <Button
-                  style={{ marginLeft: 12 }}
-                  onClick={() => handleRemoveAttachment(file.filename)}
-                >
-                  Delete file
-                </Button>
-              )}
+               
+                {!img && !pdf && (
+                  <div
+                    style={{
+                      padding: 20,
+                      background: "#eee",
+                      borderRadius: 10,
+                      textAlign: "center",
+                    }}
+                  >
+                    FILE: {file.originalName || file.originalname}
+                  </div>
+                )}
 
-            </div>
-          );
-        })}
-      </div>
-    )}
+                
+                {editing && (
+                  <>
+                    <div style={{ marginTop: 8 }}>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          fontSize: 16,
+                          marginRight: 12,
+                          display: "inline-block",
+                        }}
+                      >
+                        {file.originalName || file.originalname}
+                      </a>
 
+                      <Button
+                        style={{ marginLeft: 12 }}
+                        onClick={() => handleRemoveAttachment(file.filename)}
+                      >
+                        Delete file
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      
       {editing ? (
         <div>
           <input
@@ -205,12 +234,13 @@ export default function ArticleView() {
               id="editFileInput"
               type="file"
               multiple
+              accept="image/jpeg,image/png,image/webp,application/pdf"
               style={{ display: "none" }}
               onChange={(e) => setNewFiles([...e.target.files])}
             />
 
             {newFiles.length > 0 && (
-              <ul>
+              <ul style={{ marginTop: 10 }}>
                 {newFiles.map((f) => (
                   <li key={f.name}>{f.name}</li>
                 ))}
@@ -227,7 +257,6 @@ export default function ArticleView() {
         </div>
       ) : (
         <>
-          
           <div
             dangerouslySetInnerHTML={{ __html: article.content }}
             style={{ margin: "20px 0", lineHeight: 1.6 }}
@@ -242,7 +271,6 @@ export default function ArticleView() {
         </>
       )}
 
-     
       {error && (
         <p style={{ marginTop: 16, color: "red" }}>
           {error}
