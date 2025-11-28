@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Editor from "../Editor/Editor";
 import Button from "../../shared/ui/button/Button";
-import * as api from "/src/api/index.js"; 
+import * as api from "/src/api/index.js";
 
 export default function CreateArticle() {
   const [title, setTitle] = useState("");
@@ -27,7 +27,10 @@ export default function CreateArticle() {
 
     for (const file of selected) {
       if (!allowedTypes.includes(file.type)) {
-        setErrorMessage(`❌ Unsupported file: ${file.name}`);
+        setErrorMessage(
+          `❌ File "${file.name}" is not allowed. 
+Only images (JPG, PNG, WEBP) and PDF files are accepted.`
+        );
         return;
       }
     }
@@ -54,7 +57,6 @@ export default function CreateArticle() {
     setIsSaving(true);
 
     try {
-     
       const created = await api.createWithFiles({
         title,
         content,
@@ -66,9 +68,8 @@ export default function CreateArticle() {
       setContent("");
       setFiles([]);
 
-      
       setTimeout(() => {
-        navigate(`/article/${created.id}`); 
+        navigate(`/article/${created.id}`);
       }, 800);
     } catch (error) {
       console.error(error);
@@ -103,9 +104,11 @@ export default function CreateArticle() {
           <label style={{ fontWeight: 500 }}>Attach files:</label>
 
           <div style={{ marginTop: "10px" }}>
+            
             <input
               type="file"
               multiple
+              accept="image/jpeg,image/png,image/webp,application/pdf"
               ref={fileInputRef}
               onChange={handleFileChange}
               style={{ display: "none" }}
@@ -128,6 +131,7 @@ export default function CreateArticle() {
           )}
         </div>
 
+        
         {errorMessage && (
           <p
             style={{
@@ -137,12 +141,14 @@ export default function CreateArticle() {
               borderRadius: "8px",
               marginTop: "15px",
               fontWeight: "500",
+              whiteSpace: "pre-line",
             }}
           >
             {errorMessage}
           </p>
         )}
 
+        
         {successMessage && (
           <p
             style={{
