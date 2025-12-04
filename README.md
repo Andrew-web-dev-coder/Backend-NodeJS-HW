@@ -1,80 +1,145 @@
-# 🚗 Auto Articles — Full-Stack Node.js + React App
+# Article App — Backend (Node.js + PostgreSQL + Sequelize)
 
-##  Overview
+This project is a backend service for managing articles.
+It uses Node.js, Express, PostgreSQL, and Sequelize ORM, and supports:
 
-A simple full-stack application for managing car-related articles.
+CRUD operations for articles
 
-Users can:
-- View a list of existing articles  
-- Open and read a specific article  
-- Create new articles using a WYSIWYG editor  
+File uploads (images, PDFs)
 
-The **frontend** is built with **React + Vite**,  
-and the **backend** uses **Node.js + Express**, storing data as JSON files.
+WebSocket notifications
 
----
+Database migrations
 
-## Tech Stack
+Database seeders
 
-**Frontend:** React, React Router, React Quill, Vite  
-**Backend:** Node.js, Express, FS  
-**Other:** concurrently (to run both servers together)
+JSONB attachments storage
 
----
+🚀 Features
+✔ Fully functional REST API
 
-##  Setup & Run Instructions
+Articles can be created, updated, listed, and deleted.
 
-### №1️ Clone the repository and open the project
-```bash
-git clone <repo-url>
-cd article-app
-№2 Install dependencies
-Install for both backend and frontend:
+✔ PostgreSQL + Sequelize
 
-bash
+All data is stored in a relational database.
+Migrations & seeders are provided.
 
+✔ File Uploads (Multer)
+
+Uploads stored in /backend/uploads.
+
+✔ Attachments per Article
+
+Stored as JSONB array in PostgreSQL.
+
+✔ WebSockets
+
+Real-time notifications for:
+
+article created
+
+article updated
+
+article deleted
+
+attachment added/removed
+
+🛠 Requirements
+
+Node.js 18+
+
+PostgreSQL 14+
+
+npm or yarn
+
+# Environment Variables
+
+Create a .env file inside /backend:
+
+DB_USER=postgres
+DB_PASS=your_password
+DB_NAME=auto_articles
+DB_HOST=localhost
+DB_PORT=5432
+
+# Installation
+1. Install dependencies
 cd backend
 npm install
 
-cd ../frontend
-npm install
-№3 Run the backend only
-bash
+2. Create the database (if not exists)
+CREATE DATABASE auto_articles;
 
-cd backend
-node server.js
-✅ Runs on: http://localhost:4000
+3. Run migrations
+npx sequelize-cli db:migrate
 
-№4 Run the frontend only
-bash
+4. Run seeders (default BMW/Supra/Audi articles)
+npx sequelize-cli db:seed:all
 
-cd frontend
+▶ Run the server
 npm run dev
-✅ Opens on: http://localhost:5173
-(If the port is busy, Vite will choose another one automatically)
 
-№5 Run both together (from project root)
-bash
-Копировать код
-npm run start:all
-This uses concurrently to launch both frontend and backend.
 
-✅ Validation & Error Handling
-The backend validates input:
-title and content are required fields.
-Returns 400 Bad Request if validation fails.
+You should see:
 
-Frontend displays user-friendly messages when errors occur.
+REST API running at http://localhost:4000
+WebSocket server running at ws://localhost:4001
 
---- API Endpoints
-Method	Route	Description
-GET	/articles	Get all saved articles
-GET	/articles/:id	Get a specific article by ID
-POST	/articles	Create a new article
+📝 API Endpoints
+GET /articles
 
---- Development Notes
-If you see “Cannot find package ‘express’” or missing dependencies, make sure to:
+Get all articles.
 
-bash
-cd backend && npm install
-cd ../frontend && npm install
+GET /articles/:id
+
+Get a single article.
+
+POST /articles
+
+Create an article.
+
+Body:
+
+{
+  "title": "New article",
+  "content": "Some content"
+}
+
+PUT /articles/:id
+
+Update an article.
+
+DELETE /articles/:id
+
+Delete an article.
+
+🗃 Database Schema
+Table: articles
+Column	Type
+id	INTEGER PK
+title	VARCHAR(255)
+content	TEXT
+attachments	JSONB[]
+createdAt	TIMESTAMP
+updatedAt	TIMESTAMP
+🌱 Seed Data (Initial Articles)
+
+The project includes automatic seeding of:
+
+BMW M3 E46
+
+Toyota Supra A80
+
+Audi RS6 Avant
+
+Each with full description.
+
+🧪 Testing in PgAdmin
+
+To verify DB contents:
+
+SELECT * FROM public.articles;
+
+
+You should see your automotive articles.
