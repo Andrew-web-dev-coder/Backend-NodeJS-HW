@@ -15,26 +15,6 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
 
-
-const defaultArticles = [
-  {
-    title: "BMW M3 E46",
-    content:
-      "The BMW M3 E46 is a legendary sports car from the early 2000s...",
-  },
-  {
-    title: "Toyota Supra A80",
-    content:
-      "The Toyota Supra A80 is an iconic Japanese sports car...",
-  },
-  {
-    title: "Audi RS6 Avant",
-    content:
-      "The Audi RS6 Avant is a high-performance station wagon...",
-  }
-];
-
-
 export async function initializeArticles() {
   const count = await Article.count();
 
