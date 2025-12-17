@@ -1,145 +1,114 @@
-# Article App — Backend (Node.js + PostgreSQL + Sequelize)
+# Article App — SQL DB Assignment
 
-This project is a backend service for managing articles.
-It uses Node.js, Express, PostgreSQL, and Sequelize ORM, and supports:
+## 📌 Description
 
-CRUD operations for articles
+This project is a full-stack application developed as part of **Assignment 6: Work with SQL DB**.  
+The goal of the assignment is to refactor the application so that **articles and comments are persisted in a SQL database**, and to introduce **workspaces** for grouping articles.
 
-File uploads (images, PDFs)
+The application allows users to:
+- Create, view, edit, and delete articles
+- Add comments to articles
+- Attach files to articles
+- Group articles into workspaces and switch between them
 
-WebSocket notifications
+---
 
-Database migrations
+## 🛠 Tech Stack
 
-Database seeders
+### Backend
+- **Node.js**
+- **Express**
+- **PostgreSQL**
+- **Sequelize ORM**
+- **Multer** (file uploads)
 
-JSONB attachments storage
+### Frontend
+- **React**
+- **React Router**
+- **React Quill** (rich text editor)
+- **Vite**
 
-🚀 Features
-✔ Fully functional REST API
 
-Articles can be created, updated, listed, and deleted.
+##  Implemented Features
 
-✔ PostgreSQL + Sequelize
+### Articles
+- Create article with title, rich text content, attachments, and workspace
+- Read article with comments
+- Update article
+- Delete article
 
-All data is stored in a relational database.
-Migrations & seeders are provided.
+### Comments
+- Add comments to articles
+- Display comments when viewing an article
+- Edit and delete comments
 
-✔ File Uploads (Multer)
+### Workspaces
+- Create and delete workspaces
+- Assign articles to a workspace
+- Switch between workspaces
+- Filter articles by selected workspace
+- "All workspaces" option shows all articles
 
-Uploads stored in /backend/uploads.
+### Attachments
+- File uploads are handled as files (not stored in DB)
+- Supported formats: JPG, PNG, WEBP, PDF
 
-✔ Attachments per Article
+---
 
-Stored as JSONB array in PostgreSQL.
+## 🗄 Database
 
-✔ WebSockets
+### Main tables:
+- `articles`
+- `comments`
+- `workspaces`
 
-Real-time notifications for:
+Relationships:
+- Article → Workspace (many-to-one)
+- Comment → Article (many-to-one)
 
-article created
+All database changes are managed via **Sequelize migrations**.
 
-article updated
+---
 
-article deleted
+## 🚀 How to Run the Project
 
-attachment added/removed
-
-🛠 Requirements
-
-Node.js 18+
-
-PostgreSQL 14+
-
-npm or yarn
-
-# Environment Variables
-
-Create a .env file inside /backend:
-
-DB_USER=postgres
-DB_PASS=your_password
-DB_NAME=auto_articles
-DB_HOST=localhost
-DB_PORT=5432
-
-# Installation
-1. Install dependencies
-cd backend
+### 1. Install dependencies
+From the root directory:
+```bash
 npm install
+2. Configure environment variables
+Create a .env file inside backend/:
 
-2. Create the database (if not exists)
-CREATE DATABASE auto_articles;
+env
 
+DB_HOST=localhost
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_NAME=auto_articles
+DB_PORT=5432
 3. Run migrations
+bash
+
+cd backend
 npx sequelize-cli db:migrate
+4. Start backend and frontend together
+From the root directory:
 
-4. Run seeders (default BMW/Supra/Audi articles)
-npx sequelize-cli db:seed:all
+bash
 
-▶ Run the server
-npm run dev
+npm run start:all
+Backend runs on: http://localhost:4000
 
+Frontend runs on: http://localhost:5173
 
-You should see:
-
-REST API running at http://localhost:4000
-WebSocket server running at ws://localhost:4001
-
-📝 API Endpoints
-GET /articles
-
-Get all articles.
-
-GET /articles/:id
-
-Get a single article.
-
-POST /articles
-
-Create an article.
-
-Body:
-
-{
-  "title": "New article",
-  "content": "Some content"
-}
-
-PUT /articles/:id
-
-Update an article.
-
-DELETE /articles/:id
-
-Delete an article.
-
-🗃 Database Schema
-Table: articles
-Column	Type
-id	INTEGER PK
-title	VARCHAR(255)
-content	TEXT
-attachments	JSONB[]
-createdAt	TIMESTAMP
-updatedAt	TIMESTAMP
-🌱 Seed Data (Initial Articles)
-
-The project includes automatic seeding of:
-
-BMW M3 E46
-
-Toyota Supra A80
-
-Audi RS6 Avant
-
-Each with full description.
-
-🧪 Testing in PgAdmin
-
-To verify DB contents:
-
-SELECT * FROM public.articles;
-
-
-You should see your automotive articles.
+* Assignment Requirements Coverage
+Requirement	Status
+Articles persisted in DB	✅
+Comments persisted in DB	✅
+CRUD for articles	✅
+CRUD for comments	✅
+Workspaces implemented	✅
+UI workspace switching	✅
+Attachments handled as files	✅
+Clean project structure	✅
+Migrations provided	✅

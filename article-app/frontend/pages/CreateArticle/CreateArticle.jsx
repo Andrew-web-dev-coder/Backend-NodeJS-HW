@@ -28,7 +28,7 @@ export default function CreateArticle() {
     for (const file of selected) {
       if (!allowedTypes.includes(file.type)) {
         setErrorMessage(
-          `❌ File "${file.name}" is not allowed. 
+          `❌ File "${file.name}" is not allowed.
 Only images (JPG, PNG, WEBP) and PDF files are accepted.`
         );
         return;
@@ -54,6 +54,8 @@ Only images (JPG, PNG, WEBP) and PDF files are accepted.`
       return;
     }
 
+    const workspaceId = localStorage.getItem("workspaceId") || null;
+
     setIsSaving(true);
 
     try {
@@ -61,6 +63,7 @@ Only images (JPG, PNG, WEBP) and PDF files are accepted.`
         title,
         content,
         files,
+        workspaceId, 
       });
 
       setSuccessMessage("✅ Article created successfully!");
@@ -99,12 +102,10 @@ Only images (JPG, PNG, WEBP) and PDF files are accepted.`
 
         <Editor value={content} onChange={setContent} />
 
-       
         <div style={{ marginTop: "25px" }}>
           <label style={{ fontWeight: 500 }}>Attach files:</label>
 
           <div style={{ marginTop: "10px" }}>
-            
             <input
               type="file"
               multiple
@@ -124,14 +125,13 @@ Only images (JPG, PNG, WEBP) and PDF files are accepted.`
 
           {files.length > 0 && (
             <ul style={{ marginTop: "10px", fontSize: "14px" }}>
-              {Array.from(files).map((f) => (
+              {files.map((f) => (
                 <li key={f.name}>{f.name}</li>
               ))}
             </ul>
           )}
         </div>
 
-        
         {errorMessage && (
           <p
             style={{
@@ -148,7 +148,6 @@ Only images (JPG, PNG, WEBP) and PDF files are accepted.`
           </p>
         )}
 
-        
         {successMessage && (
           <p
             style={{

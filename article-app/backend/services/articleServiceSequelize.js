@@ -1,70 +1,45 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-
 import db from "../models/index.js";
-const Article = db.Article;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const { Article, Comment } = db;
 
-const uploadsDir = path.join(__dirname, "../uploads");
-
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
+const uploadsDir = path.join(dirname, "../uploads");
 
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
-
-
-const defaultArticles = [
-  {
-    title: "BMW M3 E46",
-    content:
-      "The BMW M3 E46 is a legendary sports car from the early 2000s...",
-  },
-  {
-    title: "Toyota Supra A80",
-    content:
-      "The Toyota Supra A80 is an iconic Japanese sports car...",
-  },
-  {
-    title: "Audi RS6 Avant",
-    content:
-      "The Audi RS6 Avant is a high-performance station wagon...",
-  }
-];
 
 
 export async function initializeArticles() {
-  const count = await Article.count();
-
-  if (count > 0) return; 
-
-  for (const article of defaultArticles) {
-    await Article.create({
-      title: article.title,
-      content: article.content,
-    });
-  }
-
-  console.log("✅ Default articles saved into PostgreSQL");
+  console.log("✅ Articles are initialized via Sequelize seed.");
 }
 
 
+
 export async function getAll() {
-  return await Article.findAll({
-    attributes: ["id", "title", "createdAt"],
+  return Article.findAll({
+    attributes: ["id", "title", "createdAt", "workspaceId"],
     order: [["createdAt", "DESC"]],
   });
 }
 
-
 export async function getById(id) {
-  return await Article.findByPk(id);
+  return Article.findByPk(id, {
+    include: [
+      {
+        model: Comment,
+        as: "comments", 
+      },
+    ],
+    order: [[{ model: Comment, as: "comments" }, "createdAt", "DESC"]],
+  });
 }
 
-
-export async function create({ title, content, files }) {
+export async function create({ title, content, files, workspaceId = null }) {
   const attachments = (files || []).map((f) => ({
     filename: f.filename,
     originalname: f.originalname,
@@ -72,78 +47,66 @@ export async function create({ title, content, files }) {
     url: `/uploads/${f.filename}`,
   }));
 
-  const article = await Article.create({
+  return Article.create({
     title,
     content,
     attachments,
+    workspaceId,
   });
-
-  return article;
 }
 
-
-export async function update(id, { title, content, files }) {
+export async function update(id, { title, content, files, workspaceId }) {
   const article = await Article.findByPk(id);
   if (!article) return null;
 
   let attachments = article.attachments || [];
 
-  if (files && files.length > 0) {
-    const newFiles = files.map((f) => ({
-      filename: f.filename,
-      originalname: f.originalname,
-      size: f.size,
-      url: `/uploads/${f.filename}`,
-    }));
-
-    attachments = [...attachments, ...newFiles];
+  if (files?.length) {
+    attachments = attachments.concat(
+      files.map((f) => ({
+        filename: f.filename,
+        originalname: f.originalname,
+        size: f.size,
+        url: `/uploads/${f.filename}`,
+      }))
+    );
   }
 
   await article.update({
     title: title ?? article.title,
     content: content ?? article.content,
     attachments,
+    workspaceId: workspaceId ?? article.workspaceId,
   });
 
   return article;
 }
 
-
 export async function remove(id) {
   const article = await Article.findByPk(id);
   if (!article) return false;
 
-  
-  if (article.attachments?.length) {
-    for (const file of article.attachments) {
-      const p = path.join(uploadsDir, file.filename);
-      if (fs.existsSync(p)) fs.unlinkSync(p);
-    }
+  for (const file of article.attachments || []) {
+    const p = path.join(uploadsDir, file.filename);
+    if (fs.existsSync(p)) fs.unlinkSync(p);
   }
 
   await article.destroy();
   return true;
 }
 
-
 export async function removeAttachment(id, filename) {
   const article = await Article.findByPk(id);
   if (!article) return null;
 
-  const exists = (article.attachments || []).find(
-    (f) => f.filename === filename
-  );
+  const attachments = article.attachments || [];
+  const exists = attachments.find((f) => f.filename === filename);
   if (!exists) return null;
 
-  
   const physical = path.join(uploadsDir, filename);
   if (fs.existsSync(physical)) fs.unlinkSync(physical);
 
-  
-  const updated = article.attachments.filter(
-    (f) => f.filename !== filename
-  );
-
+  const updated = attachments.filter((f) => f.filename !== filename);
   await article.update({ attachments: updated });
 
   return article;
