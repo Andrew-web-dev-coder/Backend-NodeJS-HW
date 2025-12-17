@@ -19,12 +19,13 @@ const sequelize = new Sequelize(
 
 const db = {};
 
+
 const files = fs.readdirSync(__dirname).filter(
   (file) =>
-    file.indexOf(".") !== 0 &&
-    file !== "index.js" &&    
-    file.endsWith(".js")
+    file.endsWith(".js") &&
+    file !== "index.js"
 );
+
 
 for (const file of files) {
   const modelPath = path.join(__dirname, file);
@@ -33,8 +34,11 @@ for (const file of files) {
   db[model.name] = model;
 }
 
+
 Object.values(db).forEach((model) => {
-  if (model.associate) model.associate(db);
+  if (model.associate) {
+    model.associate(db);
+  }
 });
 
 db.sequelize = sequelize;

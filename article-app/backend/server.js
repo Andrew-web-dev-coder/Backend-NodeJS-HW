@@ -1,15 +1,30 @@
 import express from "express";
 import cors from "cors";
 import { WebSocketServer } from "ws";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from "url";
 
+
+import {
+  createComment,
+  getComments,
+  updateComment,
+  deleteComment,
+} from "./controllers/commentController.js";
+
+import * as workspaceController from "./controllers/workspaceController.js";
 import {
   getAll,
   getById,
   create,
   update,
   remove,
-  initializeArticles
 } from "./services/articleServiceSequelize.js";
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 4000;
@@ -17,11 +32,10 @@ const WSPORT = 4001;
 
 
 const wss = new WebSocketServer({ port: WSPORT });
-console.log(`🔌 WebSocket server running on ws://localhost:${WSPORT}`);
 
 function broadcast(data) {
   const msg = JSON.stringify(data);
-  wss.clients.forEach(client => {
+  wss.clients.forEach((client) => {
     if (client.readyState === 1) client.send(msg);
   });
 }
@@ -29,106 +43,99 @@ function broadcast(data) {
 
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
 
 
-initializeArticles();
+const uploadsDir = path.join(__dirname, "uploads");
 
+app.use("/uploads", express.static(uploadsDir));
 
-
-
-app.get("/articles", async (req, res) => {
-  try {
-    const articles = await getAll();
-    res.json(articles);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to load articles" });
-  }
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, `${unique}-${file.originalname}`);
+  },
 });
 
+const upload = multer({ storage });
+
+
+app.get("/workspaces", workspaceController.getAllWorkspaces);
+app.post("/workspaces", workspaceController.createWorkspace);
+app.get("/workspaces/:id", workspaceController.getWorkspaceById);
+app.put("/workspaces/:id", workspaceController.updateWorkspace);
+app.delete("/workspaces/:id", workspaceController.deleteWorkspace);
+
+
+app.get("/articles", async (_req, res) => {
+  const articles = await getAll();
+  res.json(articles);
+});
 
 app.get("/articles/:id", async (req, res) => {
-  try {
-    const article = await getById(req.params.id);
-    if (!article) return res.status(404).json({ error: "Not found" });
-    res.json(article);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to load article" });
-  }
+  const article = await getById(req.params.id);
+  if (!article) return res.status(404).json({ error: "Not found" });
+  res.json(article);
 });
 
-
-app.post("/articles", async (req, res) => {
+app.post("/articles", upload.array("files"), async (req, res) => {
   try {
-    const { title, content } = req.body;
+    const { title, content, workspaceId } = req.body;
 
-    if (!title?.trim() || !content?.trim()) {
-      return res.status(400).json({ error: "Title and content are required" });
-    }
-
-    const article = await create({ title, content });
+    const article = await create({
+      title,
+      content,
+      workspaceId,
+      files: req.files,
+    });
 
     broadcast({
       type: "article_created",
-      id: article.id,
-      title: article.title,
       message: `🆕 Article created: "${article.title}"`,
     });
 
     res.status(201).json(article);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to create article" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Create failed" });
   }
 });
 
-
-app.put("/articles/:id", async (req, res) => {
+app.put("/articles/:id", upload.array("files"), async (req, res) => {
   try {
-    const id = req.params.id;
-    const { title, content } = req.body;
-
-    const updated = await update(id, { title, content });
-    if (!updated) return res.status(404).json({ error: "Article not found" });
-
-    broadcast({
-      type: "article_updated",
-      id,
-      title: updated.title,
-      message: `✏️ Article updated: "${updated.title}"`,
+    const updated = await update(req.params.id, {
+      title: req.body.title,
+      content: req.body.content,
+      files: req.files,
     });
 
     res.json(updated);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to update article" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Update failed" });
   }
 });
-
 
 app.delete("/articles/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
-
-    const success = await remove(id);
-    if (!success) return res.status(404).json({ error: "Not found" });
-
-    broadcast({
-      type: "article_deleted",
-      id,
-      message: "🗑 Article deleted",
-    });
-
-    res.json({ message: "Deleted successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to delete article" });
-  }
+  await remove(req.params.id);
+  res.json({ ok: true });
 });
 
 
-app.listen(PORT, () =>
-  console.log(`🚀 REST API running at http://localhost:${PORT}`)
-);
+
+
+app.get("/articles/:id/comments", getComments);
+
+
+app.post("/articles/:id/comments", createComment);
+
+
+app.put("/comments/:commentId", updateComment);
+
+
+app.delete("/comments/:commentId", deleteComment);
+
+app.listen(PORT, () => {
+  console.log(`🚀 REST API running at http://localhost:${PORT}`);
+  console.log(`Uploads dir: ${uploadsDir}`);
+});

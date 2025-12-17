@@ -2,41 +2,21 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('articles', {
+    await queryInterface.createTable('workspaces', {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
         allowNull: false,
       },
-
-      title: {
+      name: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-
-      content: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-      },
-
-      
-      workspaceId: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        references: {
-          model: "workspaces", 
-          key: "id",
-        },
-        onUpdate: "CASCADE",
-        onDelete: "SET NULL",
-      },
-
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
       },
-
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -45,6 +25,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('articles');
+    await queryInterface.dropTable('workspaces');
   }
 };

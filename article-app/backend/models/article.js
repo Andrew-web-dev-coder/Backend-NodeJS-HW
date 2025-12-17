@@ -2,7 +2,23 @@
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class Article extends Model {}
+  class Article extends Model {
+    static associate(models) {
+      
+      Article.belongsTo(models.Workspace, {
+        foreignKey: "workspaceId",
+        as: "workspace",
+        onDelete: "SET NULL"
+      });
+
+      
+      Article.hasMany(models.Comment, {
+        foreignKey: "articleId",
+        as: "comments",
+        onDelete: "CASCADE",
+      });
+    }
+  }
 
   Article.init(
     {
@@ -15,9 +31,13 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       attachments: {
-        type: DataTypes.JSONB,   
+        type: DataTypes.JSONB,
         allowNull: false,
         defaultValue: [],
+      },
+      workspaceId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
       }
     },
     {
