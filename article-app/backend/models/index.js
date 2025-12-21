@@ -4,8 +4,8 @@ import { fileURLToPath } from "url";
 import Sequelize from "sequelize";
 import configFile from "../config/config.cjs";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const currentFile = fileURLToPath(import.meta.url);
+const currentDir = path.dirname(currentFile);
 
 const env = process.env.NODE_ENV || "development";
 const config = configFile[env];
@@ -19,24 +19,23 @@ const sequelize = new Sequelize(
 
 const db = {};
 
-
-const files = fs.readdirSync(__dirname).filter(
-  (file) =>
-    file.endsWith(".js") &&
-    file !== "index.js"
-);
-
+const files = fs
+  .readdirSync(currentDir)
+  .filter(
+    (file) =>
+      file.endsWith(".js") &&
+      file !== "index.js"
+  );
 
 for (const file of files) {
-  const modelPath = path.join(__dirname, file);
+  const modelPath = path.join(currentDir, file);
   const { default: modelDef } = await import(`file://${modelPath}`);
   const model = modelDef(sequelize, Sequelize.DataTypes);
   db[model.name] = model;
 }
 
-
 Object.values(db).forEach((model) => {
-  if (model.associate) {
+  if (typeof model.associate === "function") {
     model.associate(db);
   }
 });

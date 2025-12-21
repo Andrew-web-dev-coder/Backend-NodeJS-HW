@@ -1,7 +1,10 @@
 "use strict";
 
 module.exports = {
-  async up(queryInterface, Sequelize) {
+  async up(queryInterface) {
+    
+    await queryInterface.bulkDelete("articles", null, {});
+
     await queryInterface.bulkInsert("articles", [
       {
         title: "BMW M3 E46",
@@ -10,26 +13,24 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date(),
       },
-
       {
         title: "Toyota Supra A80",
         content:
-          "The Toyota Supra A80 is an iconic Japanese sports car from the 1990s, famous for its 2JZ-GTE turbocharged engine and incredible tuning potential.",
+          "The Toyota Supra A80 is an iconic Japanese sports car from the 1990s, famous for its 2JZ-GTE engine and tuning potential.",
         createdAt: new Date(),
         updatedAt: new Date(),
       },
-
       {
         title: "Audi RS6 Avant",
         content:
-          "The Audi RS6 Avant is a high-performance station wagon combining luxury and practicality with a powerful twin-turbo V8 engine and quattro all-wheel drive.",
+          "The Audi RS6 Avant is a high-performance station wagon combining luxury, practicality, and a twin-turbo V8 engine.",
         createdAt: new Date(),
         updatedAt: new Date(),
       },
     ]);
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.bulkDelete("articles", null, {});
   },
 };
