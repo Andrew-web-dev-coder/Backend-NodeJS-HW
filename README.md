@@ -1,114 +1,144 @@
 # Article App — SQL DB Assignment
 
-## 📌 Description
+## Description
 
-This project is a full-stack application developed as part of **Assignment 6: Work with SQL DB**.  
-The goal of the assignment is to refactor the application so that **articles and comments are persisted in a SQL database**, and to introduce **workspaces** for grouping articles.
+This project is a full-stack application developed as part of **Assignment: Work with SQL Database**.
+
+The main goal of the assignment is to:
+
+# persist articles, comments, and workspaces in a SQL database  
+# use Sequelize ORM with migrations and seeders  
+# follow a clean layered architecture (routes → controllers → services)  
+# properly document database setup and initialization steps  
 
 The application allows users to:
-- Create, view, edit, and delete articles
-- Add comments to articles
-- Attach files to articles
-- Group articles into workspaces and switch between them
+
+# create, view, edit, and delete articles  
+# add, edit, and delete comments  
+# upload file attachments for articles  
+# group articles into workspaces and switch between them  
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Backend
-- **Node.js**
-- **Express**
-- **PostgreSQL**
-- **Sequelize ORM**
-- **Multer** (file uploads)
+
+# Node.js  
+# Express  
+# PostgreSQL  
+# Sequelize ORM  
+# sequelize-cli  
+# Multer (file uploads)  
 
 ### Frontend
-- **React**
-- **React Router**
-- **React Quill** (rich text editor)
-- **Vite**
 
+# React  
+# React Router  
+# Vite  
 
-##  Implemented Features
+---
+
+## Implemented Features
 
 ### Articles
-- Create article with title, rich text content, attachments, and workspace
-- Read article with comments
-- Update article
-- Delete article
+
+# create article with title, content, attachments, and workspace  
+# read article with related comments  
+# update article  
+# delete article  
 
 ### Comments
-- Add comments to articles
-- Display comments when viewing an article
-- Edit and delete comments
+
+# add comments to articles  
+# edit and delete comments  
+# comments are ordered by creation date  
 
 ### Workspaces
-- Create and delete workspaces
-- Assign articles to a workspace
-- Switch between workspaces
-- Filter articles by selected workspace
-- "All workspaces" option shows all articles
+
+# create and delete workspaces  
+# assign articles to workspaces  
+# switch between workspaces  
+# filter articles by selected workspace  
+# “All workspaces” option shows all articles  
 
 ### Attachments
-- File uploads are handled as files (not stored in DB)
-- Supported formats: JPG, PNG, WEBP, PDF
+
+# files are stored on disk (not in DB)  
+# file metadata is stored in DB  
+# supported formats: JPG, PNG, WEBP, PDF  
 
 ---
 
-## 🗄 Database
+## Database
 
-### Main tables:
-- `articles`
-- `comments`
-- `workspaces`
+### Main tables
 
-Relationships:
-- Article → Workspace (many-to-one)
-- Comment → Article (many-to-one)
+# articles  
+# comments  
+# workspaces  
 
-All database changes are managed via **Sequelize migrations**.
+### Relationships
+
+# workspace → articles (one-to-many)  
+# article → comments (one-to-many)  
+
+All schema changes are managed using Sequelize migrations.  
+Initial data is provided via Sequelize seeders.
 
 ---
 
-## 🚀 How to Run the Project
+## Environment Configuration
 
-### 1. Install dependencies
-From the root directory:
-```bash
-npm install
-2. Configure environment variables
-Create a .env file inside backend/:
+Create a `.env` file inside the `backend/` directory:
 
-env
-
+```env
 DB_HOST=localhost
-DB_USER=postgres
-DB_PASSWORD=your_password
-DB_NAME=auto_articles
 DB_PORT=5432
-3. Run migrations
-bash
+DB_NAME=auto_articles
+DB_USER=postgres
+DB_PASS=your_password
+Note
+The configuration uses DB_PASS (not DB_PASSWORD), as expected by the application config.
+
+How to Run the Project
+1. Install dependencies
+
+npm install
+2. Create the database
 
 cd backend
-npx sequelize-cli db:migrate
-4. Start backend and frontend together
-From the root directory:
+npx sequelize-cli db:create
+3. Run migrations
 
-bash
+npx sequelize-cli db:migrate
+4. Seed the database (initial articles)
+
+
+npx sequelize-cli db:seed:all
+This will insert default articles into the database
+5. Optional: Full database reset
+
+
+npm run db:reset
+Drops database, recreates it, runs migrations, and seeds
+6. Start the application
 
 npm run start:all
-Backend runs on: http://localhost:4000
+Backend: http://localhost:4000
+Frontend: http://localhost:5173
+Project Architecture
+The backend follows a layered architecture:
 
-Frontend runs on: http://localhost:5173
 
-* Assignment Requirements Coverage
-Requirement	Status
-Articles persisted in DB	✅
-Comments persisted in DB	✅
-CRUD for articles	✅
-CRUD for comments	✅
-Workspaces implemented	✅
-UI workspace switching	✅
-Attachments handled as files	✅
-Clean project structure	✅
-Migrations provided	✅
+routes → controllers → services → models
+Routes
+only define HTTP endpoints and middleware
+Controllers
+handle request/response logic
+Services
+contain business logic and DB access
+Models
+Sequelize models and associations
+This ensures consistency, testability, and separation of concerns.
+
