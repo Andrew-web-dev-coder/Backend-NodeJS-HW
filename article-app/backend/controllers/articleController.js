@@ -1,13 +1,14 @@
 import * as ArticleService from "../services/articleServiceSequelize.js";
 import { sendJson } from "../utils/sendJson.js";
 
+
 export async function getAllArticles(req, res) {
   try {
     const articles = await ArticleService.getAll();
     sendJson(res, 200, articles);
   } catch (err) {
     console.error(err);
-    sendJson(res, 500, { error: "Failed to read articles" });
+    sendJson(res, 500, { error: "Failed to fetch articles" });
   }
 }
 
@@ -20,7 +21,7 @@ export async function getArticleById(req, res) {
     sendJson(res, 200, article);
   } catch (err) {
     console.error(err);
-    sendJson(res, 500, { error: "Failed to read article" });
+    sendJson(res, 500, { error: "Failed to fetch article" });
   }
 }
 
@@ -28,15 +29,9 @@ export async function createArticle(req, res) {
   try {
     const { title, content, workspaceId } = req.body;
 
-    if (!title?.trim() || !content?.trim()) {
-      return sendJson(res, 400, {
-        error: "Title and content are required",
-      });
-    }
-
     const article = await ArticleService.create({
-      title: title.trim(),
-      content: content.trim(),
+      title,
+      content,
       workspaceId: workspaceId || null,
       files: req.files,
     });
@@ -50,19 +45,15 @@ export async function createArticle(req, res) {
 
 export async function updateArticle(req, res) {
   try {
-    const id = req.params.id;
-    const existing = await ArticleService.getById(id);
-
-    if (!existing) {
-      return sendJson(res, 404, { error: "Article not found" });
-    }
-
-    const updated = await ArticleService.update(id, {
-      title: req.body.title?.trim(),
-      content: req.body.content?.trim(),
-      workspaceId: req.body.workspaceId ?? existing.workspaceId,
+    const updated = await ArticleService.update(req.params.id, {
+      title: req.body.title,
+      content: req.body.content,
       files: req.files,
     });
+
+    if (!updated) {
+      return sendJson(res, 404, { error: "Article not found" });
+    }
 
     sendJson(res, 200, updated);
   } catch (err) {
@@ -73,11 +64,40 @@ export async function updateArticle(req, res) {
 
 export async function deleteArticle(req, res) {
   try {
-    const id = req.params.id;
-    await ArticleService.remove(id);
-    sendJson(res, 200, { message: "Article deleted" });
+    await ArticleService.remove(req.params.id);
+    sendJson(res, 200, { success: true });
   } catch (err) {
     console.error(err);
     sendJson(res, 500, { error: "Failed to delete article" });
+  }
+}
+
+
+
+export async function getArticleVersions(req, res) {
+  try {
+    const versions = await ArticleService.getVersions(req.params.id);
+    sendJson(res, 200, versions);
+  } catch (err) {
+    console.error(err);
+    sendJson(res, 500, { error: "Failed to fetch versions" });
+  }
+}
+
+export async function getArticleVersion(req, res) {
+  try {
+    const version = await ArticleService.getVersion(
+      req.params.id,
+      Number(req.params.version)
+    );
+
+    if (!version) {
+      return sendJson(res, 404, { error: "Version not found" });
+    }
+
+    sendJson(res, 200, version);
+  } catch (err) {
+    console.error(err);
+    sendJson(res, 500, { error: "Failed to fetch version" });
   }
 }
