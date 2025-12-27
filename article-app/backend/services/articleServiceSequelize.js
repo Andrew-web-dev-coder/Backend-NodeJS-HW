@@ -5,11 +5,8 @@ import { fileURLToPath } from "url";
 import db from "../models/index.js";
 import { mapFilesToAttachments } from "../utils/attachments.js";
 
-const { Article, Comment } = db;
+const { Article, ArticleVersion, Comment } = db;
 
-/**
- * Resolve uploads directory
- */
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirPath = path.dirname(currentFilePath);
 const uploadsDir = path.join(currentDirPath, "../uploads");
@@ -18,113 +15,139 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-export async function initializeArticles() {
-  console.log("Articles are initialized via Sequelize seed.");
-}
 
-/**
- * Get all articles (list view)
- */
 export async function getAll() {
-  return Article.findAll({
-    attributes: ["id", "title", "createdAt", "workspaceId"],
+  const articles = await Article.findAll({
+    attributes: ["id", "workspaceId", "createdAt"],
     order: [["createdAt", "DESC"]],
   });
+
+  const result = [];
+
+  for (const article of articles) {
+    const latestVersion = await ArticleVersion.findOne({
+      where: { articleId: article.id },
+      order: [["version", "DESC"]],
+    });
+
+    result.push({
+      id: article.id,
+      workspaceId: article.workspaceId,
+      createdAt: article.createdAt,
+      title: latestVersion?.title ?? "(no title)",
+    });
+  }
+
+  return result;
 }
 
-/**
- * Get single article with comments
- */
 export async function getById(id) {
-  return Article.findByPk(id, {
-    include: [
-      {
-        model: Comment,
-        as: "comments",
-      },
-    ],
-    order: [[{ model: Comment, as: "comments" }, "createdAt", "DESC"]],
-  });
-}
-
-/**
- * Create article
- */
-export async function create({ title, content, files, workspaceId = null }) {
-  const attachments = mapFilesToAttachments(files);
-
-  return Article.create({
-    title,
-    content,
-    attachments,
-    workspaceId,
-  });
-}
-
-/**
- * Update article
- */
-export async function update(id, { title, content, files, workspaceId }) {
   const article = await Article.findByPk(id);
   if (!article) return null;
 
-  let attachments = article.attachments || [];
-
-  if (files?.length) {
-    attachments = attachments.concat(mapFilesToAttachments(files));
-  }
-
-  await article.update({
-    title: title ?? article.title,
-    content: content ?? article.content,
-    attachments,
-    workspaceId: workspaceId ?? article.workspaceId,
+  const latestVersion = await ArticleVersion.findOne({
+    where: { articleId: id },
+    order: [["version", "DESC"]],
   });
 
-  return article;
+  const comments = await Comment.findAll({
+    where: { articleId: id },
+    order: [["createdAt", "DESC"]],
+  });
+
+  return {
+    id: article.id,
+    workspaceId: article.workspaceId,
+    createdAt: article.createdAt,
+
+    title: latestVersion?.title ?? "",
+    content: latestVersion?.content ?? "",
+    attachments: latestVersion?.attachments ?? [],
+
+    version: latestVersion?.version ?? 1,
+    comments,
+  };
 }
 
-/**
- * Delete article and its physical attachments
- */
+
+export async function create({ title, content, files, workspaceId = null }) {
+  const attachments = mapFilesToAttachments(files);
+
+  const article = await Article.create({ workspaceId });
+
+  await ArticleVersion.create({
+    articleId: article.id,
+    version: 1,
+    title,
+    content,
+    attachments,
+  });
+
+  return getById(article.id);
+}
+
+
+export async function update(id, { title, content, files }) {
+  const article = await Article.findByPk(id);
+  if (!article) return null;
+
+  const lastVersion = await ArticleVersion.findOne({
+    where: { articleId: id },
+    order: [["version", "DESC"]],
+  });
+
+  const newVersion = (lastVersion?.version ?? 0) + 1;
+
+  const oldAttachments = lastVersion?.attachments ?? [];
+  const newAttachments = files?.length
+    ? oldAttachments.concat(mapFilesToAttachments(files))
+    : oldAttachments;
+
+  await ArticleVersion.create({
+    articleId: id,
+    version: newVersion,
+    title: title ?? lastVersion.title,
+    content: content ?? lastVersion.content,
+    attachments: newAttachments,
+  });
+
+  return getById(id);
+}
+
+
 export async function remove(id) {
   const article = await Article.findByPk(id);
   if (!article) return false;
 
-  for (const file of article.attachments || []) {
-    const filePath = path.join(uploadsDir, file.filename);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+  const versions = await ArticleVersion.findAll({
+    where: { articleId: id },
+  });
+
+  for (const version of versions) {
+    for (const file of version.attachments || []) {
+      const filePath = path.join(uploadsDir, file.filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
     }
   }
 
-  await article.destroy();
+  await article.destroy(); 
   return true;
 }
 
-/**
- * Remove single attachment from article
- */
-export async function removeAttachment(id, attachmentFilename) {
-  const article = await Article.findByPk(id);
-  if (!article) return null;
 
-  const attachments = article.attachments || [];
-  const exists = attachments.find(
-    (file) => file.filename === attachmentFilename
-  );
+export async function getVersions(articleId) {
+  return ArticleVersion.findAll({
+    where: { articleId },
+    order: [["version", "DESC"]],
+    attributes: ["version", "createdAt"],
+  });
+}
 
-  if (!exists) return null;
 
-  const physicalPath = path.join(uploadsDir, attachmentFilename);
-  if (fs.existsSync(physicalPath)) {
-    fs.unlinkSync(physicalPath);
-  }
-
-  const updatedAttachments = attachments.filter(
-    (file) => file.filename !== attachmentFilename
-  );
-
-  await article.update({ attachments: updatedAttachments });
-  return article;
+export async function getVersion(articleId, version) {
+  return ArticleVersion.findOne({
+    where: { articleId, version },
+  });
 }

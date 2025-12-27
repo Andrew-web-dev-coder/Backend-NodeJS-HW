@@ -1,159 +1,185 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import * as api from "../../src/api/index.js";
 import Button from "../../shared/ui/button/Button";
 
-import "../../src/ws.js";
-
 export default function ArticleView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
 
   const [article, setArticle] = useState(null);
+  const [versions, setVersions] = useState([]);
+  const [selectedVersion, setSelectedVersion] = useState(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+
+  const [editing, setEditing] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newContent, setNewContent] = useState("");
+
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   
-  const [editing, setEditing] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newContent, setNewContent] = useState("");
-  const [newFiles, setNewFiles] = useState([]);
-
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  
-  const [comments, setComments] = useState([]);
-  const [commentText, setCommentText] = useState("");
-  const [commentLoading, setCommentLoading] = useState(false);
-  const [commentError, setCommentError] = useState("");
-
-  const [editingCommentId, setEditingCommentId] = useState(null);
-  const [editingCommentText, setEditingCommentText] = useState("");
-
-  
   useEffect(() => {
-    api
-      .get(id)
-      .then((data) => {
+    async function load() {
+      try {
+        const data = await api.get(id);
         setArticle(data);
         setComments(data.comments || []);
-        setLoading(false);
-      })
-      .catch(() => {
+        setSelectedVersion(data.version);
+        setIsReadOnly(false);
+
+        const versionsRes = await fetch(
+          `http://localhost:4000/articles/${id}/versions`
+        );
+        const versionsData = await versionsRes.json();
+        setVersions(versionsData);
+      } catch {
         setError("Failed to load article");
+      } finally {
         setLoading(false);
-      });
+      }
+    }
+
+    load();
   }, [id]);
+
+ 
+  const handleSelectVersion = async (version) => {
+    try {
+      const latestVersion = versions[0]?.version;
+
+      if (version === latestVersion) {
+        const data = await api.get(id);
+        setArticle(data);
+        setComments(data.comments || []);
+        setIsReadOnly(false);
+      } else {
+        const res = await fetch(
+          `http://localhost:4000/articles/${id}/versions/${version}`
+        );
+        const oldVersion = await res.json();
+
+        setArticle({
+          ...article,
+          title: oldVersion.title,
+          content: oldVersion.content,
+        });
+
+        setIsReadOnly(true);
+        setEditing(false);
+      }
+
+      setSelectedVersion(version);
+    } catch {
+      alert("Failed to load version");
+    }
+  };
 
   
   const startEdit = () => {
     setEditing(true);
     setNewTitle(article.title);
     setNewContent(article.content);
-    setNewFiles([]);
   };
 
   const handleSave = async () => {
-    setSaving(true);
     try {
-      const updated = await api.updateWithFiles(article.id, {
+      const updated = await api.updateWithFiles(id, {
         title: newTitle,
         content: newContent,
-        files: newFiles,
       });
+
       setArticle(updated);
+      setSelectedVersion(updated.version);
+      setIsReadOnly(false);
       setEditing(false);
-      setNewFiles([]);
     } catch {
       setError("Failed to save article");
-    } finally {
-      setSaving(false);
     }
   };
 
+  
   const handleDeleteArticle = async () => {
     if (!window.confirm("Delete permanently?")) return;
-    setDeleting(true);
-    try {
-      await api.remove(article.id);
-      navigate("/");
-    } catch {
-      setError("Failed to delete article");
-      setDeleting(false);
-    }
+    await api.remove(id);
+    navigate("/");
   };
 
   
   const handleAddComment = async () => {
     if (!commentText.trim()) return;
 
-    setCommentLoading(true);
-    try {
-      const res = await fetch(
-        `http://localhost:4000/articles/${article.id}/comments`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: commentText }),
-        }
-      );
+    const res = await fetch(
+      `http://localhost:4000/articles/${id}/comments`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: commentText }),
+      }
+    );
 
-      const created = await res.json();
-      setComments((prev) => [created, ...prev]);
-      setCommentText("");
-    } catch {
-      setCommentError("Failed to add comment");
-    } finally {
-      setCommentLoading(false);
-    }
+    const created = await res.json();
+    setComments((prev) => [created, ...prev]);
+    setCommentText("");
   };
 
- 
-  const handleUpdateComment = async (commentId) => {
-    try {
-      const res = await fetch(
-        `http://localhost:4000/comments/${commentId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: editingCommentText }),
-        }
-      );
-
-      const updated = await res.json();
-      setComments((prev) =>
-        prev.map((c) => (c.id === commentId ? updated : c))
-      );
-      setEditingCommentId(null);
-      setEditingCommentText("");
-    } catch {
-      alert("Failed to update comment");
-    }
-  };
-
- 
-  const handleDeleteComment = async (commentId) => {
-    if (!window.confirm("Delete comment?")) return;
-
-    try {
-      await fetch(`http://localhost:4000/comments/${commentId}`, {
-        method: "DELETE",
-      });
-
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
-    } catch {
-      alert("Failed to delete comment");
-    }
-  };
-
-  
   if (loading) return <p style={{ padding: 24 }}>Loading...</p>;
   if (!article) return <p style={{ padding: 24 }}>Not found</p>;
 
+  const latestVersion = versions[0]?.version;
+
   return (
     <div style={{ padding: 24, maxWidth: 900 }}>
+      {/* ===== Versions UI ===== */}
+      <div style={{ marginBottom: 20 }}>
+        <strong>Versions:</strong>
+        <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {versions.map((v) => {
+            const isActive = v.version === selectedVersion;
+            const isLatest = v.version === latestVersion;
+
+            return (
+              <Button
+                key={v.version}
+                onClick={() => handleSelectVersion(v.version)}
+                style={{
+                  background: isActive ? "#6c5ce7" : "#e0e0e0",
+                  color: isActive ? "#fff" : "#000",
+                  position: "relative",
+                }}
+              >
+                v{v.version} (
+                {new Date(v.createdAt).toLocaleString()})
+                {isLatest && (
+                  <span
+                    style={{
+                      marginLeft: 6,
+                      background: "#00b894",
+                      color: "#fff",
+                      padding: "2px 6px",
+                      borderRadius: 6,
+                      fontSize: 12,
+                    }}
+                  >
+                    Latest
+                  </span>
+                )}
+              </Button>
+            );
+          })}
+        </div>
+
+        {isReadOnly && (
+          <div style={{ marginTop: 8, color: "orange" }}>
+            Viewing old version (read-only)
+          </div>
+        )}
+      </div>
+
       <h1>{article.title}</h1>
 
       {editing ? (
@@ -169,9 +195,7 @@ export default function ArticleView() {
             style={{ width: "100%", minHeight: 150 }}
           />
           <div style={{ marginTop: 12, display: "flex", gap: 12 }}>
-            <Button onClick={handleSave}>
-              {saving ? "Saving..." : "Save"}
-            </Button>
+            <Button onClick={handleSave}>Save</Button>
             <Button onClick={() => setEditing(false)}>Cancel</Button>
           </div>
         </>
@@ -181,12 +205,12 @@ export default function ArticleView() {
             dangerouslySetInnerHTML={{ __html: article.content }}
             style={{ margin: "20px 0" }}
           />
-          <div style={{ display: "flex", gap: 12 }}>
-            <Button onClick={startEdit}>Edit</Button>
-            <Button onClick={handleDeleteArticle}>
-              {deleting ? "Deleting..." : "Delete"}
-            </Button>
-          </div>
+          {!isReadOnly && (
+            <div style={{ display: "flex", gap: 12 }}>
+              <Button onClick={startEdit}>Edit</Button>
+              <Button onClick={handleDeleteArticle}>Delete</Button>
+            </div>
+          )}
         </>
       )}
 
@@ -206,59 +230,23 @@ export default function ArticleView() {
           <div style={{ fontSize: 12, opacity: 0.6 }}>
             {new Date(c.createdAt).toLocaleString()}
           </div>
-
-          {editingCommentId === c.id ? (
-            <>
-              <textarea
-                value={editingCommentText}
-                onChange={(e) => setEditingCommentText(e.target.value)}
-                style={{ width: "100%", marginTop: 8 }}
-              />
-              <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-                <Button onClick={() => handleUpdateComment(c.id)}>
-                  Save
-                </Button>
-                <Button onClick={() => setEditingCommentId(null)}>
-                  Cancel
-                </Button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ marginTop: 8 }}>{c.text}</div>
-              <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-                <Button
-                  onClick={() => {
-                    setEditingCommentId(c.id);
-                    setEditingCommentText(c.text);
-                  }}
-                >
-                  Edit
-                </Button>
-                <Button onClick={() => handleDeleteComment(c.id)}>
-                  Delete
-                </Button>
-              </div>
-            </>
-          )}
+          <div style={{ marginTop: 8 }}>{c.text}</div>
         </div>
       ))}
 
-      <div style={{ marginTop: 24 }}>
-        <textarea
-          placeholder="Write a comment..."
-          value={commentText}
-          onChange={(e) => setCommentText(e.target.value)}
-          style={{ width: "100%", minHeight: 80 }}
-        />
-        <Button
-          style={{ marginTop: 8 }}
-          onClick={handleAddComment}
-          disabled={commentLoading}
-        >
-          {commentLoading ? "Sending..." : "Add comment"}
-        </Button>
-      </div>
+      {!isReadOnly && (
+        <div style={{ marginTop: 24 }}>
+          <textarea
+            placeholder="Write a comment..."
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            style={{ width: "100%", minHeight: 80 }}
+          />
+          <Button style={{ marginTop: 8 }} onClick={handleAddComment}>
+            Add comment
+          </Button>
+        </div>
+      )}
 
       {error && <p style={{ color: "red" }}>{error}</p>}
     </div>

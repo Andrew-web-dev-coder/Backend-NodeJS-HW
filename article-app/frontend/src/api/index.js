@@ -61,7 +61,7 @@ export async function remove(id) {
   return await res.json();
 }
 
-// COMMENTS
+
 export async function listComments(articleId) {
   const res = await fetch(`${API_URL}/${articleId}/comments`);
   if (!res.ok) throw new Error("Failed to fetch comments");
@@ -76,5 +76,17 @@ export async function createComment(articleId, text) {
   });
 
   if (!res.ok) throw new Error("Failed to create comment");
+  return await res.json();
+}
+
+export async function listVersions(articleId) {
+  const res = await fetch(`${API_URL}/${articleId}/versions`);
+  if (!res.ok) throw new Error("Failed to fetch versions");
+  return await res.json();
+}
+
+export async function getVersion(articleId, version) {
+  const res = await fetch(`${API_URL}/${articleId}/versions/${version}`);
+  if (!res.ok) throw new Error("Failed to fetch version");
   return await res.json();
 }

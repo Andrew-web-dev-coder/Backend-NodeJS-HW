@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       Article.belongsTo(models.Workspace, {
         foreignKey: "workspaceId",
         as: "workspace",
-        onDelete: "SET NULL"
+        onDelete: "SET NULL",
       });
 
       
@@ -17,28 +17,22 @@ module.exports = (sequelize, DataTypes) => {
         as: "comments",
         onDelete: "CASCADE",
       });
+
+      
+      Article.hasMany(models.ArticleVersion, {
+        foreignKey: "articleId",
+        as: "versions",
+        onDelete: "CASCADE",
+      });
     }
   }
 
   Article.init(
     {
-      title: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      content: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-      },
-      attachments: {
-        type: DataTypes.JSONB,
-        allowNull: false,
-        defaultValue: [],
-      },
       workspaceId: {
         type: DataTypes.INTEGER,
         allowNull: true,
-      }
+      },
     },
     {
       sequelize,
