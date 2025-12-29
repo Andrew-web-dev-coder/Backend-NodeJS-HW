@@ -15,6 +15,35 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+/* =========================
+   Helpers
+========================= */
+
+async function buildArticleResponse(article, versionModel) {
+  const comments = await Comment.findAll({
+    where: { articleId: article.id },
+    order: [["createdAt", "DESC"]],
+  });
+
+  return {
+    id: article.id,
+    workspaceId: article.workspaceId,
+    createdAt: article.createdAt,
+
+    title: versionModel.title,
+    content: versionModel.content,
+    attachments: versionModel.attachments || [],
+
+    version: versionModel.version,
+    createdAtVersion: versionModel.createdAt,
+
+    comments,
+  };
+}
+
+/* =========================
+   Public API
+========================= */
 
 export async function getAll() {
   const articles = await Article.findAll({
@@ -50,32 +79,17 @@ export async function getById(id) {
     order: [["version", "DESC"]],
   });
 
-  const comments = await Comment.findAll({
-    where: { articleId: id },
-    order: [["createdAt", "DESC"]],
-  });
+  if (!latestVersion) return null;
 
-  return {
-    id: article.id,
-    workspaceId: article.workspaceId,
-    createdAt: article.createdAt,
-
-    title: latestVersion?.title ?? "",
-    content: latestVersion?.content ?? "",
-    attachments: latestVersion?.attachments ?? [],
-
-    version: latestVersion?.version ?? 1,
-    comments,
-  };
+  return buildArticleResponse(article, latestVersion);
 }
-
 
 export async function create({ title, content, files, workspaceId = null }) {
   const attachments = mapFilesToAttachments(files);
 
   const article = await Article.create({ workspaceId });
 
-  await ArticleVersion.create({
+  const version = await ArticleVersion.create({
     articleId: article.id,
     version: 1,
     title,
@@ -83,9 +97,8 @@ export async function create({ title, content, files, workspaceId = null }) {
     attachments,
   });
 
-  return getById(article.id);
+  return buildArticleResponse(article, version);
 }
-
 
 export async function update(id, { title, content, files }) {
   const article = await Article.findByPk(id);
@@ -96,24 +109,22 @@ export async function update(id, { title, content, files }) {
     order: [["version", "DESC"]],
   });
 
-  const newVersion = (lastVersion?.version ?? 0) + 1;
+  const newVersionNumber = lastVersion.version + 1;
 
-  const oldAttachments = lastVersion?.attachments ?? [];
-  const newAttachments = files?.length
-    ? oldAttachments.concat(mapFilesToAttachments(files))
-    : oldAttachments;
+  const attachments = files?.length
+    ? lastVersion.attachments.concat(mapFilesToAttachments(files))
+    : lastVersion.attachments;
 
-  await ArticleVersion.create({
+  const newVersion = await ArticleVersion.create({
     articleId: id,
-    version: newVersion,
+    version: newVersionNumber,
     title: title ?? lastVersion.title,
     content: content ?? lastVersion.content,
-    attachments: newAttachments,
+    attachments,
   });
 
-  return getById(id);
+  return buildArticleResponse(article, newVersion);
 }
-
 
 export async function remove(id) {
   const article = await Article.findByPk(id);
@@ -132,10 +143,9 @@ export async function remove(id) {
     }
   }
 
-  await article.destroy(); 
+  await article.destroy();
   return true;
 }
-
 
 export async function getVersions(articleId) {
   return ArticleVersion.findAll({
@@ -145,9 +155,15 @@ export async function getVersions(articleId) {
   });
 }
 
+export async function getVersion(articleId, versionNumber) {
+  const article = await Article.findByPk(articleId);
+  if (!article) return null;
 
-export async function getVersion(articleId, version) {
-  return ArticleVersion.findOne({
-    where: { articleId, version },
+  const version = await ArticleVersion.findOne({
+    where: { articleId, version: versionNumber },
   });
+
+  if (!version) return null;
+
+  return buildArticleResponse(article, version);
 }
