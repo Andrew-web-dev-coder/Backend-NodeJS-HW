@@ -247,12 +247,12 @@ export default function ArticleView() {
           <input
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            style={{ width: "115%", marginBottom: 12 }}
+            style={{ width: "100%", marginBottom: 12 }}
           />
           <textarea
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
-            style={{ width: "115%", minHeight: 150 }}
+            style={{ width: "100%", minHeight: 150 }}
           />
 
           <div style={{ marginTop: 12 }}>
