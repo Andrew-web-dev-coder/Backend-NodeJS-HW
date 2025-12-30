@@ -154,7 +154,7 @@ export default function ArticleView() {
   const latestVersion = versions[0]?.version;
 
   return (
-    <div style={{ padding: 24, maxWidth: 900 }}>
+    <div style={{ padding: 24, maxWidth: 1600 }}>
       {/* ================= Versions ================= */}
       <div style={{ marginBottom: 20 }}>
         <strong>Versions:</strong>
@@ -216,7 +216,7 @@ export default function ArticleView() {
                       src={url}
                       alt=""
                       style={{
-                        width: "120%",
+                        width: "100%",
                         maxHeight: "70vh",
                         objectFit: "cover",
                         borderRadius: 10,
@@ -247,12 +247,12 @@ export default function ArticleView() {
           <input
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            style={{ width: "100%", marginBottom: 12 }}
+            style={{ width: "115%", marginBottom: 12 }}
           />
           <textarea
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
-            style={{ width: "100%", minHeight: 150 }}
+            style={{ width: "115%", minHeight: 150 }}
           />
 
           <div style={{ marginTop: 12 }}>
