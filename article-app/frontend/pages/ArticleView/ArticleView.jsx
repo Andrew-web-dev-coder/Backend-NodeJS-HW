@@ -25,9 +25,9 @@ export default function ArticleView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  /* =========================
-     Initial load
-  ========================= */
+  
+    // Initial load
+  
   useEffect(() => {
     async function load() {
       try {
@@ -49,9 +49,9 @@ export default function ArticleView() {
     load();
   }, [id]);
 
-  /* =========================
-     Version switch
-  ========================= */
+  
+    // Version switch
+  
   const handleSelectVersion = async (version) => {
     try {
       const latestVersion = versions[0]?.version;
@@ -81,9 +81,9 @@ export default function ArticleView() {
     }
   };
 
-  /* =========================
-     Edit / Save
-  ========================= */
+ 
+    // Edit / Save
+ 
   const startEdit = () => {
     if (isReadOnly) return;
 
@@ -113,18 +113,18 @@ export default function ArticleView() {
     }
   };
 
-  /* =========================
-     Delete article
-  ========================= */
+ 
+  //  Delete article
+  
   const handleDeleteArticle = async () => {
     if (!window.confirm("Delete permanently?")) return;
     await api.remove(id);
     navigate("/");
   };
 
-  /* =========================
-     Comments
-  ========================= */
+ 
+  // Comments
+
   const handleAddComment = async () => {
     if (!commentText.trim()) return;
 
@@ -142,9 +142,9 @@ export default function ArticleView() {
     setCommentText("");
   };
 
-  /* =========================
-     Helpers
-  ========================= */
+  
+  //  Helpers
+ 
   const isImage = (f) => /\.(jpg|jpeg|png|gif|webp)$/i.test(f.filename);
   const isPdf = (f) => /\.pdf$/i.test(f.filename);
 
@@ -247,12 +247,12 @@ export default function ArticleView() {
           <input
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            style={{ width: "115%", marginBottom: 12 }}
+            style={{ width: "100%", marginBottom: 12 }}
           />
           <textarea
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
-            style={{ width: "115%", minHeight: 150 }}
+            style={{ width: "100%", minHeight: 150 }}
           />
 
           <div style={{ marginTop: 12 }}>

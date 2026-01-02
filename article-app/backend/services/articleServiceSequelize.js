@@ -15,9 +15,7 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-/* =========================
-   Helpers
-========================= */
+
 
 async function buildArticleResponse(article, versionModel) {
   const comments = await Comment.findAll({
@@ -41,9 +39,7 @@ async function buildArticleResponse(article, versionModel) {
   };
 }
 
-/* =========================
-   Public API
-========================= */
+
 
 export async function getAll() {
   const articles = await Article.findAll({
@@ -167,3 +163,9 @@ export async function getVersion(articleId, versionNumber) {
 
   return buildArticleResponse(article, version);
 }
+
+console.log({
+  Article: !!db.Article,
+  ArticleVersion: !!db.ArticleVersion,
+  Comment: !!db.Comment,
+});

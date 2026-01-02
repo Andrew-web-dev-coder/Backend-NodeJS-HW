@@ -1,15 +1,21 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Button from "../button/Button";
+import { getToken, removeToken } from "../../../src/auth";
 
 const API = "http://localhost:4000";
 
 export default function Header() {
+  const navigate = useNavigate();
+  const token = getToken();
+
   const [workspaces, setWorkspaces] = useState([]);
   const [loadingWs, setLoadingWs] = useState(false);
   const [wsError, setWsError] = useState("");
 
-  const [current, setCurrent] = useState(localStorage.getItem("workspaceId") || "");
+  const [current, setCurrent] = useState(
+    localStorage.getItem("workspaceId") || ""
+  );
   const [newWsName, setNewWsName] = useState("");
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -19,12 +25,38 @@ export default function Header() {
     [workspaces, current]
   );
 
+  function logout() {
+    removeToken();
+    localStorage.removeItem("workspaceId");
+    navigate("/login", { replace: true });
+  }
+
+  async function authFetch(url, options = {}) {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        ...(options.headers || {}),
+      },
+    });
+
+    if (res.status === 401) {
+      logout();
+      throw new Error("Unauthorized");
+    }
+
+    return res;
+  }
+
   async function loadWorkspaces() {
     setLoadingWs(true);
     setWsError("");
+
     try {
-      const res = await fetch(`${API}/workspaces`);
-      if (!res.ok) throw new Error("Failed to load workspaces");
+      const res = await authFetch(`${API}/workspaces`);
+      if (!res.ok) throw new Error();
+
       const data = await res.json();
       setWorkspaces(Array.isArray(data) ? data : []);
     } catch (e) {
@@ -43,8 +75,6 @@ export default function Header() {
     const id = e.target.value;
     setCurrent(id);
     localStorage.setItem("workspaceId", id);
-
-    
     window.dispatchEvent(new Event("workspaceChanged"));
   }
 
@@ -54,18 +84,18 @@ export default function Header() {
 
     setCreating(true);
     setWsError("");
+
     try {
-      const res = await fetch(`${API}/workspaces`, {
+      const res = await authFetch(`${API}/workspaces`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       });
-      if (!res.ok) throw new Error("Failed to create workspace");
+
+      if (!res.ok) throw new Error();
 
       const created = await res.json();
       await loadWorkspaces();
 
-      
       const newId = String(created.id);
       setCurrent(newId);
       localStorage.setItem("workspaceId", newId);
@@ -81,19 +111,21 @@ export default function Header() {
   }
 
   async function handleDeleteWorkspace() {
-    if (!current) return; 
-    if (!currentWs) return;
+    if (!current || !currentWs) return;
 
     const ok = window.confirm(`Delete workspace "${currentWs.name}"?`);
     if (!ok) return;
 
     setDeleting(true);
     setWsError("");
-    try {
-      const res = await fetch(`${API}/workspaces/${current}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete workspace");
 
-      
+    try {
+      const res = await authFetch(`${API}/workspaces/${current}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error();
+
       setCurrent("");
       localStorage.setItem("workspaceId", "");
       window.dispatchEvent(new Event("workspaceChanged"));
@@ -132,17 +164,12 @@ export default function Header() {
         Auto articles 🚗
       </Link>
 
-      
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <select
           value={current}
           onChange={handleChange}
           disabled={loadingWs}
-          style={{
-            padding: "8px 12px",
-            borderRadius: 6,
-            minWidth: 200,
-          }}
+          style={{ padding: "8px 12px", borderRadius: 6, minWidth: 200 }}
         >
           <option value="">All workspaces</option>
           {workspaces.map((w) => (
@@ -156,20 +183,18 @@ export default function Header() {
           value={newWsName}
           onChange={(e) => setNewWsName(e.target.value)}
           placeholder="New workspace name..."
-          style={{
-            padding: "8px 12px",
-            borderRadius: 6,
-            minWidth: 220,
-          }}
+          style={{ padding: "8px 12px", borderRadius: 6, minWidth: 220 }}
         />
 
-        <Button type="button" onClick={handleCreateWorkspace} disabled={creating}>
+        <Button onClick={handleCreateWorkspace} disabled={creating}>
           {creating ? "Creating..." : "Add"}
         </Button>
 
-        <Button type="button" onClick={handleDeleteWorkspace} disabled={!current || deleting}>
+        <Button onClick={handleDeleteWorkspace} disabled={!current || deleting}>
           {deleting ? "Deleting..." : "Delete"}
         </Button>
+
+        <Button onClick={logout}>Logout</Button>
 
         {wsError && <span style={{ color: "#ffb4b4" }}>{wsError}</span>}
       </div>

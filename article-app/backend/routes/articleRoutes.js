@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import {
   getAllArticles,
   getArticleById,
@@ -8,16 +9,40 @@ import {
   getArticleVersions,
   getArticleVersion,
 } from "../controllers/articleController.js";
+
 import { upload } from "../middleware/upload.js";
+import { auth } from "../middleware/auth.js";
 
 const router = Router();
 
-router.get("/", getAllArticles);
-router.get("/:id/versions", getArticleVersions);
-router.get("/:id/versions/:version", getArticleVersion);
-router.get("/:id", getArticleById);
-router.post("/", upload.array("files"), createArticle);
-router.put("/:id", upload.array("files"), updateArticle);
-router.delete("/:id", deleteArticle);
+
+// получить все статьи
+router.get("/", auth, getAllArticles);
+
+// версии статьи
+router.get("/:id/versions", auth, getArticleVersions);
+router.get("/:id/versions/:version", auth, getArticleVersion);
+
+// получить статью по id
+router.get("/:id", auth, getArticleById);
+
+// создать статью
+router.post(
+  "/",
+  auth,
+  upload.array("files"),
+  createArticle
+);
+
+// обновить статью
+router.put(
+  "/:id",
+  auth,
+  upload.array("files"),
+  updateArticle
+);
+
+// удалить статью
+router.delete("/:id", auth, deleteArticle);
 
 export default router;
