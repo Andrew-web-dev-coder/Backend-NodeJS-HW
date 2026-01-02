@@ -1,24 +1,20 @@
-"use strict";
-const { Model } = require("sequelize");
+import { Model } from "sequelize";
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Article extends Model {
     static associate(models) {
-      
       Article.belongsTo(models.Workspace, {
         foreignKey: "workspaceId",
         as: "workspace",
         onDelete: "SET NULL",
       });
 
-      
       Article.hasMany(models.Comment, {
         foreignKey: "articleId",
         as: "comments",
         onDelete: "CASCADE",
       });
 
-      
       Article.hasMany(models.ArticleVersion, {
         foreignKey: "articleId",
         as: "versions",

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import * as api from "../../src/api/index.js";
 import ArticleCard from "../../shared/ui/articleCard/ArticleCard.jsx";
+import { getToken } from "../../src/auth.js";
 
 import "../../src/ws.js";
 
@@ -8,19 +9,25 @@ export default function ArticlesList() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [workspaceId, setWorkspaceId] = useState(localStorage.getItem("workspaceId") || "");
+  const [workspaceId, setWorkspaceId] = useState(
+    localStorage.getItem("workspaceId") || ""
+  );
 
   useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+
     api.list()
       .then((data) => setArticles(Array.isArray(data) ? data : []))
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
- 
   useEffect(() => {
-    const onWsChange = () => setWorkspaceId(localStorage.getItem("workspaceId") || "");
+    const onWsChange = () =>
+      setWorkspaceId(localStorage.getItem("workspaceId") || "");
     window.addEventListener("workspaceChanged", onWsChange);
-    window.addEventListener("storage", onWsChange); 
+    window.addEventListener("storage", onWsChange);
     return () => {
       window.removeEventListener("workspaceChanged", onWsChange);
       window.removeEventListener("storage", onWsChange);
@@ -29,7 +36,9 @@ export default function ArticlesList() {
 
   const filtered = useMemo(() => {
     if (!workspaceId) return articles;
-    return articles.filter((a) => String(a.workspaceId) === String(workspaceId));
+    return articles.filter(
+      (a) => String(a.workspaceId) === String(workspaceId)
+    );
   }, [articles, workspaceId]);
 
   if (loading) return <p style={{ padding: 24 }}>Loading...</p>;
