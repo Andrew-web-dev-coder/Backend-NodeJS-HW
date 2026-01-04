@@ -12,16 +12,15 @@ const JWT_EXPIRES_IN = "1h";
 ========================= */
 
 function isValidEmail(email) {
-  // базовая, но корректная проверка
+  
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function isValidPassword(password) {
-  // минимум 8 символов
+  
   if (typeof password !== "string") return false;
   if (password.length < 8) return false;
 
-  // хотя бы одна буква и одна цифра
   if (!/[a-zA-Z]/.test(password)) return false;
   if (!/[0-9]/.test(password)) return false;
 
@@ -33,28 +32,28 @@ function isValidPassword(password) {
 ========================= */
 
 export async function register(email, password) {
-  // 🔴 ВАЛИДАЦИЯ EMAIL
+  //  ВАЛИДАЦИЯ EMAIL
   if (!isValidEmail(email)) {
     throw new Error("Invalid email format");
   }
 
-  // 🔴 ВАЛИДАЦИЯ ПАРОЛЯ
+  //  ВАЛИДАЦИЯ ПАРОЛЯ
   if (!isValidPassword(password)) {
     throw new Error(
       "Password must be at least 8 characters long and contain letters and numbers"
     );
   }
 
-  // 🔴 Проверка существования пользователя
+  //  Проверка существования пользователя
   const existing = await User.findOne({ where: { email } });
   if (existing) {
     throw new Error("User already exists");
   }
 
-  // 🔐 Хеш пароля
+  //  Хеш пароля
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // 👤 Создание пользователя
+  //  Создание пользователя
   const user = await User.create({
     email,
     password: hashedPassword,
