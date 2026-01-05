@@ -32,28 +32,28 @@ function isValidPassword(password) {
 ========================= */
 
 export async function register(email, password) {
-  //  ВАЛИДАЦИЯ EMAIL
+
   if (!isValidEmail(email)) {
     throw new Error("Invalid email format");
   }
 
-  //  ВАЛИДАЦИЯ ПАРОЛЯ
+
   if (!isValidPassword(password)) {
     throw new Error(
       "Password must be at least 8 characters long and contain letters and numbers"
     );
   }
 
-  //  Проверка существования пользователя
+
   const existing = await User.findOne({ where: { email } });
   if (existing) {
     throw new Error("User already exists");
   }
 
-  //  Хеш пароля
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  //  Создание пользователя
+
   const user = await User.create({
     email,
     password: hashedPassword,
