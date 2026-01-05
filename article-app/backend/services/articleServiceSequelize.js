@@ -15,8 +15,6 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-
-
 async function buildArticleResponse(article, versionModel) {
   const comments = await Comment.findAll({
     where: { articleId: article.id },
@@ -26,6 +24,7 @@ async function buildArticleResponse(article, versionModel) {
   return {
     id: article.id,
     workspaceId: article.workspaceId,
+    userId: article.userId, //  Author
     createdAt: article.createdAt,
 
     title: versionModel.title,
@@ -39,11 +38,9 @@ async function buildArticleResponse(article, versionModel) {
   };
 }
 
-
-
 export async function getAll() {
   const articles = await Article.findAll({
-    attributes: ["id", "workspaceId", "createdAt"],
+    attributes: ["id", "workspaceId", "userId", "createdAt"],
     order: [["createdAt", "DESC"]],
   });
 
@@ -58,6 +55,7 @@ export async function getAll() {
     result.push({
       id: article.id,
       workspaceId: article.workspaceId,
+      userId: article.userId,
       createdAt: article.createdAt,
       title: latestVersion?.title ?? "(no title)",
     });
@@ -80,10 +78,19 @@ export async function getById(id) {
   return buildArticleResponse(article, latestVersion);
 }
 
-export async function create({ title, content, files, workspaceId = null }) {
+export async function create({
+  title,
+  content,
+  files,
+  workspaceId = null,
+  userId, // автор
+}) {
   const attachments = mapFilesToAttachments(files);
 
-  const article = await Article.create({ workspaceId });
+  const article = await Article.create({
+    workspaceId,
+    userId,
+  });
 
   const version = await ArticleVersion.create({
     articleId: article.id,
@@ -96,9 +103,20 @@ export async function create({ title, content, files, workspaceId = null }) {
   return buildArticleResponse(article, version);
 }
 
-export async function update(id, { title, content, files }) {
+
+export async function update(id, { title, content, files }, user) {
   const article = await Article.findByPk(id);
   if (!article) return null;
+
+ 
+  if (
+    user.role !== "admin" &&
+    article.userId !== user.id
+  ) {
+    const err = new Error("Forbidden");
+    err.status = 403;
+    throw err;
+  }
 
   const lastVersion = await ArticleVersion.findOne({
     where: { articleId: id },
@@ -163,9 +181,3 @@ export async function getVersion(articleId, versionNumber) {
 
   return buildArticleResponse(article, version);
 }
-
-console.log({
-  Article: !!db.Article,
-  ArticleVersion: !!db.ArticleVersion,
-  Comment: !!db.Comment,
-});

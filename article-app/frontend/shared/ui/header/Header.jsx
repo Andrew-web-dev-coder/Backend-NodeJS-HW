@@ -5,9 +5,22 @@ import { getToken, removeToken } from "../../../src/auth";
 
 const API = "http://localhost:4000";
 
+
+function getUserFromToken(token) {
+  if (!token) return null;
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 export default function Header() {
   const navigate = useNavigate();
   const token = getToken();
+  const user = getUserFromToken(token); //  admin / user
 
   const [workspaces, setWorkspaces] = useState([]);
   const [loadingWs, setLoadingWs] = useState(false);
@@ -151,6 +164,7 @@ export default function Header() {
         gap: 16,
       }}
     >
+      {/* LOGO */}
       <Link
         to="/"
         style={{
@@ -158,13 +172,20 @@ export default function Header() {
           color: "white",
           fontSize: "2rem",
           fontWeight: "bold",
-          whiteSpace: "nowrap",
         }}
       >
         Auto articles 🚗
       </Link>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      {/* CENTER */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          flexWrap: "wrap",
+        }}
+      >
         <select
           value={current}
           onChange={handleChange}
@@ -194,12 +215,20 @@ export default function Header() {
           {deleting ? "Deleting..." : "Delete"}
         </Button>
 
+        {/* 👑 ADMIN ONLY */}
+        {user?.role === "admin" && (
+          <Link to="/admin/users" style={{ textDecoration: "none" }}>
+            <Button>User Management</Button>
+          </Link>
+        )}
+
         <Button onClick={logout}>Logout</Button>
 
         {wsError && <span style={{ color: "#ffb4b4" }}>{wsError}</span>}
       </div>
 
-      <Link to="/create" style={{ textDecoration: "none", whiteSpace: "nowrap" }}>
+      {/* CREATE ARTICLE */}
+      <Link to="/create" style={{ textDecoration: "none" }}>
         <Button>➕ Create Article</Button>
       </Link>
     </header>

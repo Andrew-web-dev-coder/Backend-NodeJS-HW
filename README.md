@@ -1,15 +1,18 @@
-# Article App — SQL Database & Versioning Assignment
+# Article App — Role-Based Access Control & User Management
 
 ## Description
 
-This project is a full-stack application developed as part of **Assignment 7: Setting up relationships**.
+This project is a full-stack application developed as part of **Assignment 9: User Management**.
 
-The main goal of the assignment is to implement **article versioning** on top of an existing SQL-based application.
+The goal of this assignment is to introduce a **role-based access control (RBAC)** system into an existing SQL-based article application.
 
-Each time an article is updated:
-- a **new version** is created
-- previous versions remain accessible in **read-only mode**
-- the UI clearly indicates when an old version is being viewed
+Each user has a role (`admin` or `user`) which determines:
+
+- access to protected routes
+- ability to edit articles
+- visibility of admin-only UI sections
+
+Additionally, a **User Management** page is implemented to allow administrators to manage user roles.
 
 ---
 
@@ -21,6 +24,7 @@ Each time an article is updated:
 - PostgreSQL
 - Sequelize ORM
 - sequelize-cli
+- JWT Authentication
 - Multer (file uploads)
 
 ### Frontend
@@ -32,58 +36,68 @@ Each time an article is updated:
 
 ## Implemented Features
 
-### Articles
-- create articles
-- update articles **with versioning**
-- delete articles
-- view latest article version
-- view older article versions (read-only)
+### Role System
+- each user has a `role` field (`admin` or `user`)
+- role is stored in the database
+- role is embedded into JWT token on login
+- role is available on backend via `req.user`
 
-### Article Versioning
-- each update creates a new `ArticleVersion`
-- latest version is marked as **Latest**
-- old versions:
-  - are selectable in UI
-  - cannot be edited
-  - cannot receive new comments
-- version list shows:
-  - version number
-  - creation date
-  - active version highlight
+---
 
-### Comments
-- add comments to latest article version
-- edit and delete comments
-- comments are disabled for old versions
+### Article Permissions (RBAC)
+- only the **article creator** or an **admin** can edit an article
+- unauthorized edit attempts are blocked on backend
+- frontend hides edit controls for unauthorized users
+- backend enforces permissions regardless of frontend state
 
-### Workspaces
-- create and delete workspaces
-- assign articles to workspaces
-- filter articles by workspace
-- “All workspaces” option shows all articles
+---
 
-### Attachments
-- files are stored on disk
-- metadata is stored in DB
-- supported formats: JPG, PNG, WEBP, PDF
+### User Management Page (Admin Only)
+- accessible only to users with `admin` role
+- regular users cannot see or access the page
+- displays a list of all registered users
+- shows current role for each user
+- admins can change roles of **other users**
+- admins **cannot change their own role** (protected by backend)
+
+---
+
+### Frontend Role-Based Visibility
+- admin-only navigation links are hidden for regular users
+- protected routes redirect unauthorized users
+- UI dynamically reacts to current user role
+
+---
+
+## Security & Access Control
+
+### Backend Enforcement
+- all protected routes require authentication
+- admin-only routes validate `req.user.role === "admin"`
+- role checks are centralized and enforced server-side
+
+### Frontend Enforcement
+- role-based UI rendering
+- protected routes via `ProtectedRoute` component
+- backend remains the source of truth for permissions
 
 ---
 
 ## Database Structure
 
-### Main tables
-- `articles` — article container
-- `article_versions` — versioned content
-- `comments`
-- `workspaces`
+### Users Table
+- `id`
+- `email`
+- `password`
+- `role` (`admin` | `user`)
+- `createdAt`
+- `updatedAt`
 
-### Relationships
-- workspace → articles (one-to-many)
-- article → article_versions (one-to-many)
-- article → comments (one-to-many)
+### Articles
+- each article is linked to its creator via `userId`
+- permissions are validated against this relationship
 
-All schema changes are managed via **Sequelize migrations**.  
-Initial data is provided via **Sequelize seeders**, including backfilling article versions.
+All schema changes are managed via **Sequelize migrations**.
 
 ---
 
@@ -97,3 +111,4 @@ DB_PORT=5432
 DB_NAME=auto_articles
 DB_USER=postgres
 DB_PASS=your_password
+JWT_SECRET=your_secret_key

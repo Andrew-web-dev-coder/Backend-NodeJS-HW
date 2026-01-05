@@ -21,6 +21,7 @@ function isValidPassword(password) {
   if (typeof password !== "string") return false;
   if (password.length < 8) return false;
 
+  
   if (!/[a-zA-Z]/.test(password)) return false;
   if (!/[0-9]/.test(password)) return false;
 
@@ -32,11 +33,9 @@ function isValidPassword(password) {
 ========================= */
 
 export async function register(email, password) {
-
   if (!isValidEmail(email)) {
     throw new Error("Invalid email format");
   }
-
 
   if (!isValidPassword(password)) {
     throw new Error(
@@ -44,27 +43,27 @@ export async function register(email, password) {
     );
   }
 
-
   const existing = await User.findOne({ where: { email } });
   if (existing) {
     throw new Error("User already exists");
   }
 
-
   const hashedPassword = await bcrypt.hash(password, 10);
-
 
   const user = await User.create({
     email,
     password: hashedPassword,
+    role: "user", 
   });
 
   return {
     id: user.id,
     email: user.email,
+    role: user.role,
     createdAt: user.createdAt,
   };
 }
+
 
 /* =========================
    Login
@@ -83,10 +82,21 @@ export async function login(email, password) {
   }
 
   const token = jwt.sign(
-    { id: user.id, email: user.email },
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role, 
+    },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
   );
 
-  return { token };
+  return {
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
+  };
 }
