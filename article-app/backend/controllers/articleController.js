@@ -34,6 +34,7 @@ export async function createArticle(req, res) {
       content,
       workspaceId: workspaceId || null,
       files: req.files,
+      userId: req.user.id, // АВТОР
     });
 
     sendJson(res, 201, article);
@@ -43,13 +44,18 @@ export async function createArticle(req, res) {
   }
 }
 
+
 export async function updateArticle(req, res) {
   try {
-    const updated = await ArticleService.update(req.params.id, {
-      title: req.body.title,
-      content: req.body.content,
-      files: req.files,
-    });
+    const updated = await ArticleService.update(
+      req.params.id,
+      {
+        title: req.body.title,
+        content: req.body.content,
+        files: req.files,
+      },
+      req.user // ТЕКУЩИЙ ПОЛЬЗОВАТЕЛЬ
+    );
 
     if (!updated) {
       return sendJson(res, 404, { error: "Article not found" });
@@ -58,9 +64,15 @@ export async function updateArticle(req, res) {
     sendJson(res, 200, updated);
   } catch (err) {
     console.error(err);
+
+    if (err.status === 403) {
+      return sendJson(res, 403, { error: "Forbidden" });
+    }
+
     sendJson(res, 500, { error: "Failed to update article" });
   }
 }
+
 
 export async function deleteArticle(req, res) {
   try {

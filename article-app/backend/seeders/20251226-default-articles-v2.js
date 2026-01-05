@@ -10,9 +10,9 @@ module.exports = {
 
    
     await queryInterface.bulkInsert("articles", [
-      { workspaceId: null, createdAt: now, updatedAt: now },
-      { workspaceId: null, createdAt: now, updatedAt: now },
-      { workspaceId: null, createdAt: now, updatedAt: now },
+      { workspaceId: null, userId: 1, createdAt: now, updatedAt: now },
+      { workspaceId: null, userId: 1, createdAt: now, updatedAt: now },
+      { workspaceId: null, userId: 1, createdAt: now, updatedAt: now },
     ]);
 
     

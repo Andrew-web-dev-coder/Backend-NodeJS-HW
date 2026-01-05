@@ -10,6 +10,7 @@ import Editor from "../../pages/Editor/Editor.jsx";
 
 import Login from "../../pages/Login/Login.jsx";
 import Register from "../../pages/Register/Register.jsx";
+import UserManagement from "../../pages/UserManagement/UserManagement.jsx";
 
 import { ToastProvider } from "../ToastProvider.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
@@ -66,6 +67,19 @@ export default function App() {
               <>
                 <Header />
                 <Editor />
+              </>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ===== ADMIN ONLY ===== */}
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute adminOnly>
+              <>
+                <Header />
+                <UserManagement />
               </>
             </ProtectedRoute>
           }

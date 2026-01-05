@@ -9,6 +9,7 @@ import articleRoutes from "./routes/articleRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
 import workspaceRoutes from "./routes/workspaceRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 
@@ -43,7 +44,9 @@ app.use("/auth", authRoutes);
 app.use("/articles", articleRoutes);
 app.use("/articles/:id/comments", commentRoutes);
 app.use("/workspaces", workspaceRoutes);
+app.use("/users", userRoutes); 
 
 app.listen(PORT, () => {
   console.log(`🚀 REST API running at http://localhost:${PORT}`);
 });
+
