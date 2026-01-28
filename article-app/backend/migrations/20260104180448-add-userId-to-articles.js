@@ -1,12 +1,15 @@
+"use strict";
+
 export async function up(queryInterface, Sequelize) {
   await queryInterface.addColumn("articles", "userId", {
     type: Sequelize.INTEGER,
-    allowNull: true, 
+    allowNull: false,
     references: {
       model: "users",
       key: "id",
     },
-    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+    onDelete: "RESTRICT",
   });
 }
 

@@ -17,10 +17,50 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 4000;
-const WSPORT = 4001;
 
-/* WebSocket */
+/* ========================
+   CORS 
+======================== */
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
+);
+
+/* ========================
+   MIDDLEWARES
+======================== */
+app.use(express.json());
+
+/* ========================
+   STATIC FILES
+======================== */
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+/* ========================
+   ROUTES
+======================== */
+app.use("/auth", authRoutes);
+app.use("/articles", articleRoutes);
+app.use("/articles/:id/comments", commentRoutes);
+app.use("/workspaces", workspaceRoutes);
+app.use("/users", userRoutes);
+
+/* ========================
+   SERVER
+======================== */
+const PORT = 4000;
+app.listen(PORT, () => {
+  console.log(`🚀 REST API running at http://localhost:${PORT}`);
+});
+
+/* ========================
+   WEBSOCKET
+======================== */
+const WSPORT = 4001;
 const wss = new WebSocketServer({ port: WSPORT });
 
 export function broadcast(data) {
@@ -31,22 +71,3 @@ export function broadcast(data) {
     }
   });
 }
-
-/* Middlewares */
-app.use(cors());
-app.use(express.json());
-
-/* Static uploads */
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-/* Routes */
-app.use("/auth", authRoutes);
-app.use("/articles", articleRoutes);
-app.use("/articles/:id/comments", commentRoutes);
-app.use("/workspaces", workspaceRoutes);
-app.use("/users", userRoutes); 
-
-app.listen(PORT, () => {
-  console.log(`🚀 REST API running at http://localhost:${PORT}`);
-});
-

@@ -4,13 +4,15 @@ import { sendJson } from "../utils/sendJson.js";
 
 export async function getAllArticles(req, res) {
   try {
-    const articles = await ArticleService.getAll();
+    const { search } = req.query;
+    const articles = await ArticleService.getAll(search);
     sendJson(res, 200, articles);
   } catch (err) {
     console.error(err);
     sendJson(res, 500, { error: "Failed to fetch articles" });
   }
 }
+
 
 export async function getArticleById(req, res) {
   try {
@@ -34,7 +36,7 @@ export async function createArticle(req, res) {
       content,
       workspaceId: workspaceId || null,
       files: req.files,
-      userId: req.user.id, // АВТОР
+      userId: req.user.id, 
     });
 
     sendJson(res, 201, article);
@@ -54,7 +56,7 @@ export async function updateArticle(req, res) {
         content: req.body.content,
         files: req.files,
       },
-      req.user // ТЕКУЩИЙ ПОЛЬЗОВАТЕЛЬ
+      req.user 
     );
 
     if (!updated) {

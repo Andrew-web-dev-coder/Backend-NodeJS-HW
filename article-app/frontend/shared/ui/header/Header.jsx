@@ -5,7 +5,6 @@ import { getToken, removeToken } from "../../../src/auth";
 
 const API = "http://localhost:4000";
 
-
 function getUserFromToken(token) {
   if (!token) return null;
 
@@ -17,10 +16,10 @@ function getUserFromToken(token) {
   }
 }
 
-export default function Header() {
+export default function Header({ search, setSearch }) {
   const navigate = useNavigate();
   const token = getToken();
-  const user = getUserFromToken(token); //  admin / user
+  const user = getUserFromToken(token); // admin / user
 
   const [workspaces, setWorkspaces] = useState([]);
   const [loadingWs, setLoadingWs] = useState(false);
@@ -214,6 +213,23 @@ export default function Header() {
         <Button onClick={handleDeleteWorkspace} disabled={!current || deleting}>
           {deleting ? "Deleting..." : "Delete"}
         </Button>
+
+        {/*  SEARCH  */}
+        <input
+          type="text"
+          placeholder="Search articles..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{
+            padding: "8px 12px",
+            borderRadius: 6,
+            minWidth: 220,
+            background: "#fff",
+            color: "#000",
+            border: "none",
+            outline: "none",
+          }}
+        />
 
         {/* 👑 ADMIN ONLY */}
         {user?.role === "admin" && (

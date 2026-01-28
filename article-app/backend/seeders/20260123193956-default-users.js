@@ -1,15 +1,26 @@
 "use strict";
-
 import bcrypt from "bcrypt";
 
 export default {
   async up(queryInterface) {
-    const passwordHash = await bcrypt.hash("admin123", 10);
     const now = new Date();
 
+    
+    const users = await queryInterface.sequelize.query(
+      `SELECT id FROM users LIMIT 1`
+    );
+
+    if (users[0].length > 0) {
+      console.log("ℹ️ Users already exist, skipping default-users seed");
+      return;
+    }
+
+    
+    const passwordHash = await bcrypt.hash("admin123", 10);
+
+   
     await queryInterface.bulkInsert("users", [
       {
-        id: 1, 
         email: "admin@example.com",
         password: passwordHash,
         role: "admin",
@@ -20,6 +31,8 @@ export default {
   },
 
   async down(queryInterface) {
-    await queryInterface.bulkDelete("users", null, {});
+    await queryInterface.bulkDelete("users", {
+      email: "admin@example.com",
+    });
   },
 };

@@ -5,7 +5,7 @@ import { getToken } from "../../src/auth.js";
 
 import "../../src/ws.js";
 
-export default function ArticlesList() {
+export default function ArticlesList({ search }) {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,17 +17,22 @@ export default function ArticlesList() {
     const token = getToken();
     if (!token) return;
 
-    api.list()
+    setLoading(true);
+
+    api
+      .list(search) 
       .then((data) => setArticles(Array.isArray(data) ? data : []))
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [search]);
 
   useEffect(() => {
     const onWsChange = () =>
       setWorkspaceId(localStorage.getItem("workspaceId") || "");
+
     window.addEventListener("workspaceChanged", onWsChange);
     window.addEventListener("storage", onWsChange);
+
     return () => {
       window.removeEventListener("workspaceChanged", onWsChange);
       window.removeEventListener("storage", onWsChange);
@@ -35,18 +40,22 @@ export default function ArticlesList() {
   }, []);
 
   const filtered = useMemo(() => {
+    
     if (!workspaceId) return articles;
+
     return articles.filter(
-      (a) => String(a.workspaceId) === String(workspaceId)
+      (a) => String(a.workspaceId ?? "") === String(workspaceId)
     );
   }, [articles, workspaceId]);
 
   if (loading) return <p style={{ padding: 24 }}>Loading...</p>;
 
   return (
-    <section style={{ padding: "24px" }}>
+    <section style={{ padding: 24 }}>
       {filtered.length === 0 ? (
-        <p style={{ opacity: 0.7 }}>No articles in this workspace</p>
+        <p style={{ opacity: 0.7 }}>
+          {search ? "No articles found" : "No articles in this workspace"}
+        </p>
       ) : (
         <div
           style={{

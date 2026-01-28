@@ -7,7 +7,7 @@ import {
 
 const router = express.Router();
 
-// Admins only
+
 router.get("/", auth, adminOnly, getAllUsers);
 router.patch("/:id/role", auth, adminOnly, updateUserRole);
  

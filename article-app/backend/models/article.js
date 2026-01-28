@@ -38,8 +38,9 @@ export default (sequelize, DataTypes) => {
       },
 
       userId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "userId", 
       },
     },
     {

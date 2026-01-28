@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 
 import Header from "../../shared/ui/header/Header.jsx";
@@ -16,6 +16,8 @@ import { ToastProvider } from "../ToastProvider.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 
 export default function App() {
+  const [search, setSearch] = useState("");
+
   return (
     <ToastProvider>
       <Routes>
@@ -29,8 +31,8 @@ export default function App() {
           element={
             <ProtectedRoute>
               <>
-                <Header />
-                <ArticlesList />
+                <Header search={search} setSearch={setSearch} />
+                <ArticlesList search={search} />
               </>
             </ProtectedRoute>
           }
@@ -41,7 +43,7 @@ export default function App() {
           element={
             <ProtectedRoute>
               <>
-                <Header />
+                <Header search={search} setSearch={setSearch} />
                 <ArticleView />
               </>
             </ProtectedRoute>
@@ -53,7 +55,7 @@ export default function App() {
           element={
             <ProtectedRoute>
               <>
-                <Header />
+                <Header search={search} setSearch={setSearch} />
                 <CreateArticle />
               </>
             </ProtectedRoute>
@@ -65,7 +67,7 @@ export default function App() {
           element={
             <ProtectedRoute>
               <>
-                <Header />
+                <Header search={search} setSearch={setSearch} />
                 <Editor />
               </>
             </ProtectedRoute>
@@ -78,7 +80,7 @@ export default function App() {
           element={
             <ProtectedRoute adminOnly>
               <>
-                <Header />
+                <Header search={search} setSearch={setSearch} />
                 <UserManagement />
               </>
             </ProtectedRoute>

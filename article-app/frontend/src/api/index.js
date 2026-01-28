@@ -1,25 +1,26 @@
-import { setToken, getToken } from "../auth";
+import { setToken, getToken, removeToken } from "../auth";
 
-const API_URL = "http://localhost:4000/articles";
-const AUTH_URL = "http://localhost:4000/auth";
+const API_ROOT = "http://localhost:4000";
+const API_URL = `${API_ROOT}/articles`;
+const AUTH_URL = `${API_ROOT}/auth`;
 
-
-  // 401 HANDLER
-
+// ========================
+// 401 HANDLER
+// ========================
 
 function handle401(res) {
   if (res.status === 401) {
-    console.warn(" 401 Unauthorized → redirect to /login");
-    localStorage.removeItem("jwt_token");
+    console.warn("401 Unauthorized → redirect to /login");
+    removeToken(); 
     window.location.href = "/login";
     return true;
   }
   return false;
 }
 
-
-  // AUTH
-
+// ========================
+// AUTH
+// ========================
 
 export async function login(email, password) {
   const res = await fetch(`${AUTH_URL}/login`, {
@@ -37,29 +38,39 @@ export async function login(email, password) {
   return data;
 }
 
+// ========================
+// HELPERS
+// ========================
 
-  // HELPERS
-
-
-function authHeaders(extra = {}) {
+function authHeaders(extra = {}) {  
   const token = getToken();
+
+  console.log("TOKEN USED (authHeaders):", token); 
+
   return {
     ...extra,
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
 
+// ========================
+// ARTICLES
+// ========================
 
-  // ARTICLES
+export async function list(search = "") {
+  const query = search
+    ? `?search=${encodeURIComponent(search)}`
+    : "";
 
+  console.log("TOKEN USED (list):", getToken());
+  console.log("REQUEST URL:", `${API_URL}${query}`);
 
-export async function list() {
-  const res = await fetch(API_URL, {
+  const res = await fetch(`${API_URL}${query}`, {
     headers: authHeaders(),
   });
 
-  if (handle401(res)) return;
-  if (!res.ok) throw new Error("Failed to fetch list");
+  if (handle401(res)) return [];
+  if (!res.ok) throw new Error("Failed to fetch articles");
 
   return await res.json();
 }
@@ -103,23 +114,27 @@ export async function updateWithFiles(id, data) {
   form.append("title", data.title);
   form.append("content", data.content);
 
-  if (data.workspaceId) {
-    form.append("workspaceId", data.workspaceId);
-  }
-
   (data.files || []).forEach((f) => form.append("files", f));
 
-  const res = await fetch(`${API_URL}/${id}`, {
+  const token = getToken();
+
+  const res = await fetch(`http://localhost:4000/articles/${id}`, {
     method: "PUT",
-    headers: authHeaders(),
+    headers: {
+      Authorization: `Bearer ${token}`, 
+    },
     body: form,
   });
 
-  if (handle401(res)) return;
-  if (!res.ok) throw new Error("Update failed");
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("UPDATE FAILED:", text);
+    throw new Error("Update failed");
+  }
 
   return await res.json();
 }
+  
 
 export async function remove(id) {
   const res = await fetch(`${API_URL}/${id}`, {
@@ -133,9 +148,9 @@ export async function remove(id) {
   return await res.json();
 }
 
-
-  // COMMENTS
-
+// ========================
+// COMMENTS
+// ========================
 
 export async function listComments(articleId) {
   const res = await fetch(`${API_URL}/${articleId}/comments`, {
@@ -161,9 +176,9 @@ export async function createComment(articleId, text) {
   return await res.json();
 }
 
-
-  // VERSIONS
-
+// ========================
+// VERSIONS
+// ========================
 
 export async function listVersions(articleId) {
   const res = await fetch(`${API_URL}/${articleId}/versions`, {
