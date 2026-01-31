@@ -45,7 +45,14 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 ======================== */
 app.use("/auth", authRoutes);
 app.use("/articles", articleRoutes);
-app.use("/articles/:id/comments", commentRoutes);
+app.use(
+  "/articles/:id/comments",
+  (req, res, next) => {
+    req.articleId = Number(req.params.id);
+    next();
+  },
+  commentRoutes
+);
 app.use("/workspaces", workspaceRoutes);
 app.use("/users", userRoutes);
 

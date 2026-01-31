@@ -44,12 +44,14 @@ async function buildArticleResponse(article, versionModel) {
 export async function getAll(search) {
   let articleIds = null;
 
-  if (search && search.trim()) {
+  const normalizedSearch = search?.trim();
+
+  if (normalizedSearch) {
     const versions = await ArticleVersion.findAll({
       where: {
         [Op.or]: [
-          { title: { [Op.iLike]: `%${search}%` } },
-          { content: { [Op.iLike]: `%${search}%` } },
+          { title: { [Op.iLike]: `%${normalizedSearch}%` } },
+          { content: { [Op.iLike]: `%${normalizedSearch}%` } },
         ],
       },
       attributes: ["articleId"],
@@ -75,18 +77,20 @@ export async function getAll(search) {
     ],
   });
 
-  return articles.map(article => {
-    const version = article.versions?.[0];
+  return articles
+    .filter(article => article.versions?.length)
+    .map(article => {
+      const version = article.versions[0];
 
-    return {
-      id: article.id,
-      workspaceId: article.workspaceId,
-      userId: article.userId,
-      createdAt: article.createdAt,
-      title: version?.title ?? "",
-      content: version?.content ?? "",
-    };
-  });
+      return {
+        id: article.id,
+        workspaceId: article.workspaceId,
+        userId: article.userId,
+        createdAt: article.createdAt,
+        title: version.title,
+        content: version.content,
+      };
+    });
 }
 
 /* ===================== GET BY ID ===================== */
@@ -118,7 +122,7 @@ export async function create({
 
   const article = await Article.create({
     workspaceId,
-    userId, 
+    userId,
   });
 
   const version = await ArticleVersion.create({
@@ -139,12 +143,13 @@ export async function update(id, { title, content, files }, user) {
   if (!article) return null;
 
   const articleUserId = Number(article.userId);
-  const requestUserId = Number(user.id);
+  const requestUserId = Number(
+    user.userId ?? user.id ?? user.sub
+  );
 
   console.log("ARTICLE USER:", articleUserId);
   console.log("REQ USER:", requestUserId);
 
-  
   if (user.role !== "admin" && articleUserId !== requestUserId) {
     const err = new Error("Forbidden");
     err.status = 403;
@@ -170,7 +175,6 @@ export async function update(id, { title, content, files }, user) {
 
   return buildArticleResponse(article, newVersion);
 }
-
 
 /* ===================== DELETE ===================== */
 
