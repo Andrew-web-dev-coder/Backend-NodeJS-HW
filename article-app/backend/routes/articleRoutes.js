@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { exportArticlePdf } from "../controllers/exportController.js";
 
 import {
   getAllArticles,
@@ -19,6 +20,7 @@ const router = Router();
 
 router.get("/", auth, getAllArticles);
 
+router.get("/:id/export/pdf", exportArticlePdf);
 
 router.get("/:id/versions", auth, getArticleVersions);
 router.get("/:id/versions/:version", auth, getArticleVersion);

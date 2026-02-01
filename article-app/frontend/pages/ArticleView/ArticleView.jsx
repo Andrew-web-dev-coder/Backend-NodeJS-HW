@@ -25,9 +25,8 @@ export default function ArticleView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  
-    // Initial load
-  
+  /* ================= Initial load ================= */
+
   useEffect(() => {
     async function load() {
       try {
@@ -49,9 +48,8 @@ export default function ArticleView() {
     load();
   }, [id]);
 
-  
-    // Version switch
-  
+  /* ================= Version switch ================= */
+
   const handleSelectVersion = async (version) => {
     try {
       const latestVersion = versions[0]?.version;
@@ -81,9 +79,8 @@ export default function ArticleView() {
     }
   };
 
- 
-    // Edit / Save
- 
+  /* ================= Edit / Save ================= */
+
   const startEdit = () => {
     if (isReadOnly) return;
 
@@ -113,17 +110,36 @@ export default function ArticleView() {
     }
   };
 
- 
-  //  Delete article
-  
+  /* ================= Delete ================= */
+
   const handleDeleteArticle = async () => {
     if (!window.confirm("Delete permanently?")) return;
     await api.remove(id);
     navigate("/");
   };
 
- 
-  // Comments
+  /* ================= Export PDF (LAB 11) ================= */
+
+  const handleExportPdf = () => {
+    const token = localStorage.getItem("token");
+    const url = `http://localhost:4000/articles/${id}/export/pdf`;
+
+    fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Export failed");
+
+        const blob = await res.blob();
+        const link = document.createElement("a");
+        link.href = window.URL.createObjectURL(blob);
+        link.download = `article_${id}.pdf`;
+        link.click();
+      })
+      .catch(() => setError("Failed to export PDF"));
+  };
+
+  /* ================= Comments ================= */
 
   const handleAddComment = async () => {
     if (!commentText.trim()) return;
@@ -142,9 +158,8 @@ export default function ArticleView() {
     setCommentText("");
   };
 
-  
-  //  Helpers
- 
+  /* ================= Helpers ================= */
+
   const isImage = (f) => /\.(jpg|jpeg|png|gif|webp)$/i.test(f.filename);
   const isPdf = (f) => /\.pdf$/i.test(f.filename);
 
@@ -288,6 +303,7 @@ export default function ArticleView() {
             <div style={{ display: "flex", gap: 12 }}>
               <Button onClick={startEdit}>Edit</Button>
               <Button onClick={handleDeleteArticle}>Delete</Button>
+              <Button onClick={handleExportPdf}>Export as PDF</Button>
             </div>
           )}
         </>

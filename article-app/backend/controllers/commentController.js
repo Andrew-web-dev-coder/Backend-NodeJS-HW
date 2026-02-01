@@ -2,12 +2,6 @@ import db from "../models/index.js";
 
 const Comment = db.Comment;
 
-/*
-  ВАЖНО:
-  articleId приходит НЕ из req.params,
-  а из req.articleId (пробрасывается в server.js)
-*/
-
 /* ===================== CREATE ===================== */
 
 export async function createComment(req, res) {
