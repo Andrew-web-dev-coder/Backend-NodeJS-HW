@@ -5,8 +5,8 @@ import Sequelize from "sequelize";
 import configFile from "../config/config.cjs";
 
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 
 const env = process.env.NODE_ENV || "development";
 const config = configFile[env];
@@ -22,7 +22,7 @@ const sequelize = new Sequelize(
 const db = {};
 
 const modelFiles = fs
-  .readdirSync(__dirname)
+  .readdirSync(dirname)
   .filter(
     (file) =>
       file.endsWith(".js") &&
@@ -30,7 +30,7 @@ const modelFiles = fs
   );
 
 for (const file of modelFiles) {
-  const fullPath = path.join(__dirname, file);
+  const fullPath = path.join(dirname, file);
   const imported = await import(`file://${fullPath}`);
 
 
